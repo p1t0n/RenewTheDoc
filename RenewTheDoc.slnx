@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RenewTheDoc.App/RenewTheDoc.App.csproj" />
+    <Project Path="src/RenewTheDoc.Core/RenewTheDoc.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RenewTheDoc.Core.Tests/RenewTheDoc.Core.Tests.csproj" />
+  </Folder>
+</Solution>

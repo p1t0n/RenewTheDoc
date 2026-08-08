@@ -14,7 +14,22 @@ Early bootstrap. Work is planned and tracked on the [Linear wayfinder map](https
 
 ## Stack
 
-.NET cross-platform (exact flavor — MAUI / Uno / Avalonia — under evaluation).
+.NET MAUI on .NET 10. Solution layout:
+
+- `src/RenewTheDoc.Core` — domain model (see [CONTEXT.md](CONTEXT.md)), no MAUI dependency
+- `src/RenewTheDoc.App` — MAUI app (Android + iOS); notifications via Plugin.LocalNotification behind `IReminderScheduler`, storage via sqlite-net behind `IDocumentStore`
+- `tests/RenewTheDoc.Core.Tests` — domain rules tests
+
+## Building locally
+
+```sh
+dotnet workload install maui
+dotnet test                                        # domain tests
+dotnet build src/RenewTheDoc.App -f net10.0-android \
+  -p:JavaSdkDirectory=$JAVA_HOME                   # needs JDK 17 + Android SDK
+```
+
+iOS build requires a Mac with full Xcode (`net10.0-ios` target).
 
 ## License
 

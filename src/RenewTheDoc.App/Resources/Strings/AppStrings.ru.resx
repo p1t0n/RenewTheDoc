@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="DocumentsTitle" xml:space="preserve"><value>Документы</value></data>
+  <data name="AddDocumentTitle" xml:space="preserve"><value>Добавить документ</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Название</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>напр. Паспорт</value></data>
+  <data name="ExpiryDateLabel" xml:space="preserve"><value>Действителен до</value></data>
+  <data name="RemindBeforeLabel" xml:space="preserve"><value>Напомнить за</value></data>
+  <data name="NoteLabel" xml:space="preserve"><value>Заметка (необязательно)</value></data>
+  <data name="OneWeek" xml:space="preserve"><value>1 неделю</value></data>
+  <data name="OneMonth" xml:space="preserve"><value>1 месяц</value></data>
+  <data name="ThreeMonths" xml:space="preserve"><value>3 месяца</value></data>
+  <data name="CustomDays" xml:space="preserve"><value>Своё число дней</value></data>
+  <data name="CustomDaysPlaceholder" xml:space="preserve"><value>Число дней</value></data>
+  <data name="Save" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="EmptyList" xml:space="preserve"><value>Документов пока нет. Добавьте первый.</value></data>
+  <data name="StateExpired" xml:space="preserve"><value>Истёк</value></data>
+  <data name="StateExpiringSoon" xml:space="preserve"><value>Скоро истекает</value></data>
+  <data name="StateOk" xml:space="preserve"><value>OK</value></data>
+  <data name="ExpiresOn" xml:space="preserve"><value>Действителен до {0}</value></data>
+  <data name="NotificationTitle" xml:space="preserve"><value>Напоминание о продлении</value></data>
+  <data name="NotificationText" xml:space="preserve"><value>{0} истекает {1}</value></data>
+  <data name="NameRequired" xml:space="preserve"><value>Укажите название</value></data>
+  <data name="InvalidCustomDays" xml:space="preserve"><value>Введите корректное число дней</value></data>
+  <data name="ValidationTitle" xml:space="preserve"><value>Проверьте форму</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
+</root>

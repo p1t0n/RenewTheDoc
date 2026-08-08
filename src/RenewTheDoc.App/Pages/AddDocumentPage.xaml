@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:l="clr-namespace:RenewTheDoc.App.Localization"
+             x:Class="RenewTheDoc.App.Pages.AddDocumentPage"
+             Title="{l:Translate AddDocumentTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="12">
+
+            <Label Text="{l:Translate NameLabel}" />
+            <Entry x:Name="NameEntry" Placeholder="{l:Translate NamePlaceholder}" />
+
+            <Label Text="{l:Translate ExpiryDateLabel}" />
+            <DatePicker x:Name="ExpiryPicker" />
+
+            <Label Text="{l:Translate RemindBeforeLabel}" />
+            <Picker x:Name="RemindPicker" SelectedIndexChanged="OnRemindOptionChanged" />
+            <Entry x:Name="CustomDaysEntry" Keyboard="Numeric"
+                   Placeholder="{l:Translate CustomDaysPlaceholder}" IsVisible="False" />
+
+            <Label Text="{l:Translate NoteLabel}" />
+            <Entry x:Name="NoteEntry" />
+
+            <Button Text="{l:Translate Save}" Clicked="OnSaveClicked" Margin="0,12,0,0" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

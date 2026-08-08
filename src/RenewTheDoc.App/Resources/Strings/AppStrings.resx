@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="DocumentsTitle" xml:space="preserve"><value>Documents</value></data>
+  <data name="AddDocumentTitle" xml:space="preserve"><value>Add document</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Name</value></data>
+  <data name="NamePlaceholder" xml:space="preserve"><value>e.g. Passport</value></data>
+  <data name="ExpiryDateLabel" xml:space="preserve"><value>Expiry date</value></data>
+  <data name="RemindBeforeLabel" xml:space="preserve"><value>Remind before</value></data>
+  <data name="NoteLabel" xml:space="preserve"><value>Note (optional)</value></data>
+  <data name="OneWeek" xml:space="preserve"><value>1 week</value></data>
+  <data name="OneMonth" xml:space="preserve"><value>1 month</value></data>
+  <data name="ThreeMonths" xml:space="preserve"><value>3 months</value></data>
+  <data name="CustomDays" xml:space="preserve"><value>Custom (days)</value></data>
+  <data name="CustomDaysPlaceholder" xml:space="preserve"><value>Number of days</value></data>
+  <data name="Save" xml:space="preserve"><value>Save</value></data>
+  <data name="EmptyList" xml:space="preserve"><value>No documents yet. Add your first one.</value></data>
+  <data name="StateExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="StateExpiringSoon" xml:space="preserve"><value>Expiring soon</value></data>
+  <data name="StateOk" xml:space="preserve"><value>OK</value></data>
+  <data name="ExpiresOn" xml:space="preserve"><value>Valid until {0}</value></data>
+  <data name="NotificationTitle" xml:space="preserve"><value>Renewal reminder</value></data>
+  <data name="NotificationText" xml:space="preserve"><value>{0} expires on {1}</value></data>
+  <data name="NameRequired" xml:space="preserve"><value>Name is required</value></data>
+  <data name="InvalidCustomDays" xml:space="preserve"><value>Enter a valid number of days</value></data>
+  <data name="ValidationTitle" xml:space="preserve"><value>Check the form</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
+</root>
