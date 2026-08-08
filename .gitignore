@@ -1,0 +1,32 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+artifacts/
+*.binlog
+
+# Rider / IDEA
+.idea/
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# macOS
+.DS_Store
+
+# iOS / Xcode intermediates
+*.xcuserstate
+xcuserdata/
+DerivedData/
+
+# Android
+*.keystore
+!debug.keystore
+.gradle/
+
+# Local secrets
+*.env
+appsettings.local.json
