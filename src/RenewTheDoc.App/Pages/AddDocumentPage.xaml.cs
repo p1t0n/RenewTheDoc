@@ -35,7 +35,7 @@ public partial class AddDocumentPage : ContentPage
         var name = NameEntry.Text?.Trim();
         if (string.IsNullOrEmpty(name))
         {
-            await DisplayAlert(L.T("ValidationTitle"), L.T("NameRequired"), L.T("Ok"));
+            await DisplayAlertAsync(L.T("ValidationTitle"), L.T("NameRequired"), L.T("Ok"));
             return;
         }
 
@@ -51,7 +51,7 @@ public partial class AddDocumentPage : ContentPage
         }
         else
         {
-            await DisplayAlert(L.T("ValidationTitle"), L.T("InvalidCustomDays"), L.T("Ok"));
+            await DisplayAlertAsync(L.T("ValidationTitle"), L.T("InvalidCustomDays"), L.T("Ok"));
             return;
         }
 
