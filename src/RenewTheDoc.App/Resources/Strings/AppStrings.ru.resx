@@ -48,4 +48,5 @@
   <data name="OwnerNew" xml:space="preserve"><value>+ Новый владелец…</value></data>
   <data name="NewOwnerTitle" xml:space="preserve"><value>Новый владелец</value></data>
   <data name="NewOwnerPrompt" xml:space="preserve"><value>Имя</value></data>
+  <data name="FilterAll" xml:space="preserve"><value>Все</value></data>
 </root>
