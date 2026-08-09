@@ -43,4 +43,9 @@
   <data name="DeleteConfirmTitle" xml:space="preserve"><value>Удалить документ?</value></data>
   <data name="DeleteConfirmText" xml:space="preserve"><value>«{0}» и его напоминание будут удалены. Это действие нельзя отменить.</value></data>
   <data name="CountryLabel" xml:space="preserve"><value>Страна (необязательно)</value></data>
+  <data name="OwnerLabel" xml:space="preserve"><value>Владелец</value></data>
+  <data name="OwnerMe" xml:space="preserve"><value>Я</value></data>
+  <data name="OwnerNew" xml:space="preserve"><value>+ Новый владелец…</value></data>
+  <data name="NewOwnerTitle" xml:space="preserve"><value>Новый владелец</value></data>
+  <data name="NewOwnerPrompt" xml:space="preserve"><value>Имя</value></data>
 </root>

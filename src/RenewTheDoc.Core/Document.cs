@@ -11,4 +11,7 @@ public sealed record Document
 
     /// <summary>Optional ISO 3166-1 alpha-2 code of the Country this document is issued/valid in.</summary>
     public string? CountryCode { get; init; }
+
+    /// <summary>Optional Owner; null means the document belongs to the user ("Me").</summary>
+    public Guid? OwnerId { get; init; }
 }

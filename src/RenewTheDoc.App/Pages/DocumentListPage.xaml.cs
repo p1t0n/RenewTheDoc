@@ -7,12 +7,14 @@ namespace RenewTheDoc.App.Pages;
 public partial class DocumentListPage : ContentPage
 {
     private readonly IDocumentStore _store;
+    private readonly IOwnerStore _owners;
     private readonly IReminderScheduler _scheduler;
 
-    public DocumentListPage(IDocumentStore store, IReminderScheduler scheduler)
+    public DocumentListPage(IDocumentStore store, IOwnerStore owners, IReminderScheduler scheduler)
     {
         InitializeComponent();
         _store = store;
+        _owners = owners;
         _scheduler = scheduler;
     }
 
@@ -27,6 +29,7 @@ public partial class DocumentListPage : ContentPage
     {
         var today = DateOnly.FromDateTime(DateTime.Now);
         var documents = DocumentListOrder.Sorted(await _store.GetAllAsync(), today);
+        var ownerNames = (await _owners.GetAllAsync()).ToDictionary(o => o.Id, o => o.Name);
 
         var groups = documents
             .GroupBy(d => d.GetState(today))
@@ -38,7 +41,8 @@ public partial class DocumentListPage : ContentPage
                     DocumentState.ExpiringSoon => "GroupComingUp",
                     _ => "GroupAllGood",
                 }),
-                g.Select(d => DocumentListItem.From(d, today))))
+                g.Select(d => DocumentListItem.From(d, today,
+                    d.OwnerId is { } oid ? ownerNames.GetValueOrDefault(oid) : null))))
             .ToList();
 
         DocumentsView.ItemsSource = groups;
@@ -75,7 +79,7 @@ public sealed class DocumentGroup : List<DocumentListItem>
 
 public sealed record DocumentListItem(Document Source, string Name, string DateText, string NumberText, string UnitText, Color StateColor)
 {
-    public static DocumentListItem From(Document d, DateOnly today)
+    public static DocumentListItem From(Document d, DateOnly today, string? ownerName = null)
     {
         var state = d.GetState(today);
         var days = d.ExpiryDate.DayNumber - today.DayNumber;
@@ -90,6 +94,7 @@ public sealed record DocumentListItem(Document Source, string Name, string DateT
             ? L.F("ExpiredOn", d.ExpiryDate.ToString("d"))
             : L.F("ExpiresOn", d.ExpiryDate.ToString("d"));
         if (d.CountryCode is { } cc) dateText += $" · {cc}";
+        if (ownerName is not null) dateText = $"{ownerName} · {dateText}";
 
         var color = Application.Current!.RequestedTheme == AppTheme.Dark
             ? state switch

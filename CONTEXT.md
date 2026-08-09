@@ -4,6 +4,10 @@
 
 A thing the user wants to renew before it stops being valid — an ID, passport, insurance policy, registration. Has a **Name**, an **Expiry Date**, a **Remind-Before**, an optional free-text **Note**, and an optional **Country**. No dedicated document-number field; the Note holds anything extra.
 
+## Owner
+
+The person a Document belongs to — the user's relative or anyone else. Owners live in a small user-managed dictionary. A Document without an Owner belongs to the user; the UI shows this as a localized "Me", which is not a dictionary entry.
+
 ## Country
 
 The country a Document is issued in or valid for — optional, since not every document is country-bound. Stored as an ISO 3166-1 alpha-2 code; displayed with the localized country name. Future country-specific features (templates, online renewal) key on this code.

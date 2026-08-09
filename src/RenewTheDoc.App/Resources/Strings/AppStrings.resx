@@ -43,4 +43,9 @@
   <data name="DeleteConfirmTitle" xml:space="preserve"><value>Delete document?</value></data>
   <data name="DeleteConfirmText" xml:space="preserve"><value>“{0}” and its reminder will be removed. This cannot be undone.</value></data>
   <data name="CountryLabel" xml:space="preserve"><value>Country (optional)</value></data>
+  <data name="OwnerLabel" xml:space="preserve"><value>Owner</value></data>
+  <data name="OwnerMe" xml:space="preserve"><value>Me</value></data>
+  <data name="OwnerNew" xml:space="preserve"><value>+ New owner…</value></data>
+  <data name="NewOwnerTitle" xml:space="preserve"><value>New owner</value></data>
+  <data name="NewOwnerPrompt" xml:space="preserve"><value>Name</value></data>
 </root>

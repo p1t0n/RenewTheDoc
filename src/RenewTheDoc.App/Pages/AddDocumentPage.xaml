@@ -31,6 +31,13 @@
                 <Entry x:Name="NoteEntry" />
             </Border>
 
+            <Label Text="{l:Translate OwnerLabel}" Style="{StaticResource FieldLabel}" />
+            <Border Style="{StaticResource Field}">
+                <Picker x:Name="OwnerPicker" FontFamily="ManropeRegular" FontSize="14.5"
+                        TextColor="{AppThemeBinding Light={StaticResource InkL}, Dark={StaticResource InkD}}"
+                        BackgroundColor="Transparent" SelectedIndexChanged="OnOwnerChanged" />
+            </Border>
+
             <Label Text="{l:Translate CountryLabel}" Style="{StaticResource FieldLabel}" />
             <Border Style="{StaticResource Field}">
                 <Picker x:Name="CountryPicker" FontFamily="ManropeRegular" FontSize="14.5"

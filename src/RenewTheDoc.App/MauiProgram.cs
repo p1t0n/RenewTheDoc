@@ -34,8 +34,9 @@ public static class MauiProgram
                 Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent));
 #endif
 
-        builder.Services.AddSingleton<IDocumentStore>(
-            new SqliteDocumentStore(Path.Combine(FileSystem.AppDataDirectory, "renewthedoc.db3")));
+        var db = new SqliteDocumentStore(Path.Combine(FileSystem.AppDataDirectory, "renewthedoc.db3"));
+        builder.Services.AddSingleton<IDocumentStore>(db);
+        builder.Services.AddSingleton<IOwnerStore>(db);
         builder.Services.AddSingleton<IReminderScheduler, LocalNotificationReminderScheduler>();
         builder.Services.AddTransient<DocumentListPage>();
         builder.Services.AddTransient<AddDocumentPage>();

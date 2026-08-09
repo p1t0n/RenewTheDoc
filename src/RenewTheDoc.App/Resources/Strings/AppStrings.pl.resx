@@ -43,4 +43,9 @@
   <data name="DeleteConfirmTitle" xml:space="preserve"><value>Usunąć dokument?</value></data>
   <data name="DeleteConfirmText" xml:space="preserve"><value>„{0}” i jego przypomnienie zostaną usunięte. Tej operacji nie można cofnąć.</value></data>
   <data name="CountryLabel" xml:space="preserve"><value>Kraj (opcjonalnie)</value></data>
+  <data name="OwnerLabel" xml:space="preserve"><value>Właściciel</value></data>
+  <data name="OwnerMe" xml:space="preserve"><value>Ja</value></data>
+  <data name="OwnerNew" xml:space="preserve"><value>+ Nowy właściciel…</value></data>
+  <data name="NewOwnerTitle" xml:space="preserve"><value>Nowy właściciel</value></data>
+  <data name="NewOwnerPrompt" xml:space="preserve"><value>Imię</value></data>
 </root>
