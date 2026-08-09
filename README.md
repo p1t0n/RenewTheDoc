@@ -11,6 +11,14 @@ Cross-platform mobile app (Android / iOS / iPad) that reminds you to renew your 
 
 Planned later: country-specific renewal guidance, document scans, backup/export. See the fog sections of the completed wayfinder maps.
 
+## Screenshots
+
+<p>
+  <img src="docs/screenshots/list-light.png" width="260" alt="Document list, light theme — urgency groups and owner/status filter chips" />
+  <img src="docs/screenshots/list-dark.png" width="260" alt="Document list, dark theme" />
+  <img src="docs/screenshots/edit.png" width="260" alt="Edit document form — remind-before segments, owner and country pickers" />
+</p>
+
 ## Status
 
 Core feature set working on Android and iOS (verified on emulator and simulators). Not yet distributed via stores. Work is planned and tracked as wayfinder maps on [Linear](https://linear.app/renewthedoc/team/REN) — completed so far: Bootstrap, Design, Edit/Delete + Country, Owners.
