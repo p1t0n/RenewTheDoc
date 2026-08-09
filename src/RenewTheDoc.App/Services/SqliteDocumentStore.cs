@@ -23,6 +23,18 @@ public sealed class SqliteDocumentStore : IDocumentStore
         await _db.InsertAsync(DocumentRow.From(document));
     }
 
+    public async Task UpdateAsync(Document document, CancellationToken ct = default)
+    {
+        await EnsureInitializedAsync();
+        await _db.UpdateAsync(DocumentRow.From(document));
+    }
+
+    public async Task DeleteAsync(Guid documentId, CancellationToken ct = default)
+    {
+        await EnsureInitializedAsync();
+        await _db.DeleteAsync<DocumentRow>(documentId);
+    }
+
     private async Task EnsureInitializedAsync()
     {
         if (_initialized) return;
@@ -38,6 +50,7 @@ public sealed class SqliteDocumentStore : IDocumentStore
         public string ExpiryDate { get; set; } = string.Empty; // ISO yyyy-MM-dd
         public int RemindBeforeDays { get; set; }
         public string? Note { get; set; }
+        public string? CountryCode { get; set; }
 
         public static DocumentRow From(Document d) => new()
         {
@@ -46,6 +59,7 @@ public sealed class SqliteDocumentStore : IDocumentStore
             ExpiryDate = d.ExpiryDate.ToString("O"),
             RemindBeforeDays = d.RemindBefore.Days,
             Note = d.Note,
+            CountryCode = d.CountryCode,
         };
 
         public Document ToDocument() => new()
@@ -55,6 +69,7 @@ public sealed class SqliteDocumentStore : IDocumentStore
             ExpiryDate = DateOnly.Parse(ExpiryDate),
             RemindBefore = new RemindBefore(RemindBeforeDays),
             Note = Note,
+            CountryCode = CountryCode,
         };
     }
 }

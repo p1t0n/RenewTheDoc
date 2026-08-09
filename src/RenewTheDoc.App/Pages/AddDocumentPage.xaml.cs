@@ -1,14 +1,18 @@
+using System.Globalization;
 using RenewTheDoc.App.Localization;
 using RenewTheDoc.Core;
 
 namespace RenewTheDoc.App.Pages;
 
+[QueryProperty(nameof(EditTarget), "edit")]
 public partial class AddDocumentPage : ContentPage
 {
     private readonly IDocumentStore _store;
     private readonly IReminderScheduler _scheduler;
     private readonly List<Button> _segments = [];
+    private readonly IReadOnlyList<(string Code, string Name)> _countries;
     private int _selectedSegment = 1; // default: 1 month
+    private Document? _editTarget;
 
     private static readonly (string Key, RemindBefore? Value)[] RemindOptions =
     [
@@ -17,6 +21,12 @@ public partial class AddDocumentPage : ContentPage
         ("ThreeMonths", RemindBefore.ThreeMonths),
         ("CustomDays", null),
     ];
+
+    public Document? EditTarget
+    {
+        get => _editTarget;
+        set { _editTarget = value; ApplyEditTarget(); }
+    }
 
     public AddDocumentPage(IDocumentStore store, IReminderScheduler scheduler)
     {
@@ -34,7 +44,42 @@ public partial class AddDocumentPage : ContentPage
         }
         SelectSegment(_selectedSegment);
 
+        _countries = CultureInfo.GetCultures(CultureTypes.SpecificCultures)
+            .Select(c => { try { return new RegionInfo(c.Name); } catch { return null; } })
+            .Where(r => r is { TwoLetterISORegionName.Length: 2 })
+            .DistinctBy(r => r!.TwoLetterISORegionName)
+            .Select(r => (r!.TwoLetterISORegionName, r.DisplayName))
+            .OrderBy(x => x.DisplayName, StringComparer.CurrentCulture)
+            .ToList();
+        CountryPicker.ItemsSource = new[] { "—" }.Concat(_countries.Select(c => c.Name)).ToList();
+        CountryPicker.SelectedIndex = 0;
+
         ExpiryPicker.Date = DateTime.Now.Date.AddMonths(6);
+    }
+
+    private void ApplyEditTarget()
+    {
+        if (_editTarget is not { } doc) return;
+
+        Title = L.T("EditDocumentTitle");
+        DeleteButton.IsVisible = true;
+        NameEntry.Text = doc.Name;
+        ExpiryPicker.Date = doc.ExpiryDate.ToDateTime(TimeOnly.MinValue);
+        NoteEntry.Text = doc.Note;
+
+        var preset = Array.FindIndex(RemindOptions, o => o.Value?.Days == doc.RemindBefore.Days);
+        if (preset >= 0)
+        {
+            SelectSegment(preset);
+        }
+        else
+        {
+            SelectSegment(RemindOptions.Length - 1);
+            CustomDaysEntry.Text = doc.RemindBefore.Days.ToString();
+        }
+
+        var countryIndex = _countries.ToList().FindIndex(c => c.Code == doc.CountryCode);
+        CountryPicker.SelectedIndex = countryIndex >= 0 ? countryIndex + 1 : 0;
     }
 
     private void SelectSegment(int index)
@@ -72,14 +117,36 @@ public partial class AddDocumentPage : ContentPage
 
         var document = new Document
         {
+            Id = _editTarget?.Id ?? Guid.NewGuid(),
             Name = name,
             ExpiryDate = DateOnly.FromDateTime(ExpiryPicker.Date ?? DateTime.Now.Date),
             RemindBefore = remindBefore,
             Note = string.IsNullOrWhiteSpace(NoteEntry.Text) ? null : NoteEntry.Text.Trim(),
+            CountryCode = CountryPicker.SelectedIndex > 0 ? _countries[CountryPicker.SelectedIndex - 1].Code : null,
         };
 
-        await _store.AddAsync(document);
+        if (_editTarget is null)
+        {
+            await _store.AddAsync(document);
+        }
+        else
+        {
+            await _store.UpdateAsync(document);
+            await _scheduler.CancelAsync(document.Id); // edit = re-creation (CONTEXT.md)
+        }
         await _scheduler.ScheduleAsync(document);
+        await Shell.Current.GoToAsync("..");
+    }
+
+    private async void OnDeleteClicked(object? sender, EventArgs e)
+    {
+        if (_editTarget is not { } doc) return;
+        var confirmed = await DisplayAlertAsync(
+            L.T("DeleteConfirmTitle"), L.F("DeleteConfirmText", doc.Name), L.T("Delete"), L.T("Cancel"));
+        if (!confirmed) return;
+
+        await _scheduler.CancelAsync(doc.Id);
+        await _store.DeleteAsync(doc.Id);
         await Shell.Current.GoToAsync("..");
     }
 }

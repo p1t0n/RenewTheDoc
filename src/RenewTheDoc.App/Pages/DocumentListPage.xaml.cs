@@ -7,11 +7,13 @@ namespace RenewTheDoc.App.Pages;
 public partial class DocumentListPage : ContentPage
 {
     private readonly IDocumentStore _store;
+    private readonly IReminderScheduler _scheduler;
 
-    public DocumentListPage(IDocumentStore store)
+    public DocumentListPage(IDocumentStore store, IReminderScheduler scheduler)
     {
         InitializeComponent();
         _store = store;
+        _scheduler = scheduler;
     }
 
     protected override async void OnAppearing()
@@ -44,6 +46,25 @@ public partial class DocumentListPage : ContentPage
 
     private async void OnAddClicked(object? sender, EventArgs e) =>
         await Shell.Current.GoToAsync(nameof(AddDocumentPage));
+
+    private async void OnRowTapped(object? sender, TappedEventArgs e)
+    {
+        if ((sender as BindableObject)?.BindingContext is not DocumentListItem item) return;
+        await Shell.Current.GoToAsync(nameof(AddDocumentPage),
+            new Dictionary<string, object> { ["edit"] = item.Source });
+    }
+
+    private async void OnSwipeDelete(object? sender, EventArgs e)
+    {
+        if ((sender as BindableObject)?.BindingContext is not DocumentListItem item) return;
+        var confirmed = await DisplayAlertAsync(
+            L.T("DeleteConfirmTitle"), L.F("DeleteConfirmText", item.Name), L.T("Delete"), L.T("Cancel"));
+        if (!confirmed) return;
+
+        await _scheduler.CancelAsync(item.Source.Id);
+        await _store.DeleteAsync(item.Source.Id);
+        await RefreshAsync();
+    }
 }
 
 public sealed class DocumentGroup : List<DocumentListItem>
@@ -52,7 +73,7 @@ public sealed class DocumentGroup : List<DocumentListItem>
     public DocumentGroup(string title, IEnumerable<DocumentListItem> items) : base(items) => Title = title;
 }
 
-public sealed record DocumentListItem(string Name, string DateText, string NumberText, string UnitText, Color StateColor)
+public sealed record DocumentListItem(Document Source, string Name, string DateText, string NumberText, string UnitText, Color StateColor)
 {
     public static DocumentListItem From(Document d, DateOnly today)
     {
@@ -68,6 +89,7 @@ public sealed record DocumentListItem(string Name, string DateText, string Numbe
         var dateText = state == DocumentState.Expired
             ? L.F("ExpiredOn", d.ExpiryDate.ToString("d"))
             : L.F("ExpiresOn", d.ExpiryDate.ToString("d"));
+        if (d.CountryCode is { } cc) dateText += $" · {cc}";
 
         var color = Application.Current!.RequestedTheme == AppTheme.Dark
             ? state switch
@@ -83,6 +105,6 @@ public sealed record DocumentListItem(string Name, string DateText, string Numbe
                 _ => Color.FromArgb("#31855C"),
             };
 
-        return new DocumentListItem(d.Name, dateText, number, unit, color);
+        return new DocumentListItem(d, d.Name, dateText, number, unit, color);
     }
 }

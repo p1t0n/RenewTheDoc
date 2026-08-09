@@ -37,4 +37,10 @@
   <data name="ExpiredOn" xml:space="preserve"><value>Wygasł {0}</value></data>
   <data name="SaveDocument" xml:space="preserve"><value>Zapisz dokument</value></data>
   <data name="AddShort" xml:space="preserve"><value>+ Dodaj</value></data>
+  <data name="EditDocumentTitle" xml:space="preserve"><value>Edytuj dokument</value></data>
+  <data name="Delete" xml:space="preserve"><value>Usuń</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Anuluj</value></data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>Usunąć dokument?</value></data>
+  <data name="DeleteConfirmText" xml:space="preserve"><value>„{0}” i jego przypomnienie zostaną usunięte. Tej operacji nie można cofnąć.</value></data>
+  <data name="CountryLabel" xml:space="preserve"><value>Kraj (opcjonalnie)</value></data>
 </root>

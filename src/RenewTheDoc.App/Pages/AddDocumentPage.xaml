@@ -31,7 +31,21 @@
                 <Entry x:Name="NoteEntry" />
             </Border>
 
+            <Label Text="{l:Translate CountryLabel}" Style="{StaticResource FieldLabel}" />
+            <Border Style="{StaticResource Field}">
+                <Picker x:Name="CountryPicker" FontFamily="ManropeRegular" FontSize="14.5"
+                        TextColor="{AppThemeBinding Light={StaticResource InkL}, Dark={StaticResource InkD}}"
+                        BackgroundColor="Transparent" />
+            </Border>
+
             <Button Text="{l:Translate SaveDocument}" Style="{StaticResource PrimaryButton}" Clicked="OnSaveClicked" Margin="0,20,0,0" />
+
+            <Button x:Name="DeleteButton" Text="{l:Translate Delete}" IsVisible="False"
+                    Clicked="OnDeleteClicked" Margin="0,8,0,0"
+                    FontFamily="ManropeExtraBold" FontSize="15" CornerRadius="10" Padding="0,13"
+                    BackgroundColor="Transparent" BorderWidth="1.5"
+                    BorderColor="{AppThemeBinding Light={StaticResource BadL}, Dark={StaticResource BadD}}"
+                    TextColor="{AppThemeBinding Light={StaticResource BadL}, Dark={StaticResource BadD}}" />
 
         </VerticalStackLayout>
     </ScrollView>

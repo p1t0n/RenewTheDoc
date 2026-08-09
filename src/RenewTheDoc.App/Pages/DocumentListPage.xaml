@@ -27,19 +27,31 @@
             </CollectionView.GroupHeaderTemplate>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="pages:DocumentListItem">
-                    <Border Style="{StaticResource Row}">
-                        <Grid ColumnDefinitions="4,72,*" ColumnSpacing="10">
-                            <BoxView Grid.Column="0" Color="{Binding StateColor}" />
-                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Padding="0,12">
-                                <Label Text="{Binding NumberText}" Style="{StaticResource NumBig}" TextColor="{Binding StateColor}" />
-                                <Label Text="{Binding UnitText}" Style="{StaticResource NumUnit}" />
-                            </VerticalStackLayout>
-                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Padding="0,12" Spacing="1">
-                                <Label Text="{Binding Name}" Style="{StaticResource RowName}" LineBreakMode="TailTruncation" />
-                                <Label Text="{Binding DateText}" Style="{StaticResource RowDate}" />
-                            </VerticalStackLayout>
-                        </Grid>
-                    </Border>
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="{l:Translate Delete}"
+                                           BackgroundColor="{AppThemeBinding Light={StaticResource BadL}, Dark={StaticResource BadD}}"
+                                           Invoked="OnSwipeDelete" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+                        <Border Style="{StaticResource Row}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnRowTapped" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="4,72,*" ColumnSpacing="10">
+                                <BoxView Grid.Column="0" Color="{Binding StateColor}" />
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Padding="0,12">
+                                    <Label Text="{Binding NumberText}" Style="{StaticResource NumBig}" TextColor="{Binding StateColor}" />
+                                    <Label Text="{Binding UnitText}" Style="{StaticResource NumUnit}" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Padding="0,12" Spacing="1">
+                                    <Label Text="{Binding Name}" Style="{StaticResource RowName}" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding DateText}" Style="{StaticResource RowDate}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                    </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>

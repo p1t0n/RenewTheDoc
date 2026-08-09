@@ -37,4 +37,10 @@
   <data name="ExpiredOn" xml:space="preserve"><value>Истёк {0}</value></data>
   <data name="SaveDocument" xml:space="preserve"><value>Сохранить документ</value></data>
   <data name="AddShort" xml:space="preserve"><value>+ Добавить</value></data>
+  <data name="EditDocumentTitle" xml:space="preserve"><value>Изменить документ</value></data>
+  <data name="Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>Удалить документ?</value></data>
+  <data name="DeleteConfirmText" xml:space="preserve"><value>«{0}» и его напоминание будут удалены. Это действие нельзя отменить.</value></data>
+  <data name="CountryLabel" xml:space="preserve"><value>Страна (необязательно)</value></data>
 </root>
