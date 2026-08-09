@@ -4,33 +4,46 @@
              xmlns:l="clr-namespace:RenewTheDoc.App.Localization"
              xmlns:pages="clr-namespace:RenewTheDoc.App.Pages"
              x:Class="RenewTheDoc.App.Pages.DocumentListPage"
-             x:DataType="pages:DocumentListPage"
-             Title="{l:Translate DocumentsTitle}">
+             Shell.NavBarIsVisible="False">
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="+" Clicked="OnAddClicked" />
-    </ContentPage.ToolbarItems>
+    <Grid RowDefinitions="Auto,*">
 
-    <CollectionView x:Name="DocumentsView">
-        <CollectionView.EmptyView>
-            <Label Text="{l:Translate EmptyList}"
-                   HorizontalOptions="Center" VerticalOptions="Center"
-                   Margin="24" />
-        </CollectionView.EmptyView>
-        <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="pages:DocumentListItem">
-                <Grid Padding="16,12" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                    <Label Grid.Row="0" Grid.Column="0" Text="{Binding Name}" FontSize="17" FontAttributes="Bold" />
-                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding ExpiresText}" FontSize="13" TextColor="{AppThemeBinding Light=#666666, Dark=#AAAAAA}" />
-                    <Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
-                            BackgroundColor="{Binding StateColor}"
-                            StrokeThickness="0" StrokeShape="RoundRectangle 8"
-                            Padding="8,4" VerticalOptions="Center">
-                        <Label Text="{Binding StateText}" TextColor="White" FontSize="12" />
+        <!-- Compass header: title left, outline Add right, hairline below -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,16,14,12">
+            <Label Grid.Column="0" Text="{l:Translate DocumentsTitle}" Style="{StaticResource ScreenTitle}" VerticalOptions="Center" />
+            <Button Grid.Column="1" Text="{l:Translate AddShort}" Style="{StaticResource OutlineButton}" Clicked="OnAddClicked" />
+        </Grid>
+
+        <CollectionView Grid.Row="1" x:Name="DocumentsView" IsGrouped="True">
+            <CollectionView.EmptyView>
+                <Label Text="{l:Translate EmptyList}"
+                       TextColor="{AppThemeBinding Light={StaticResource MutedL}, Dark={StaticResource MutedD}}"
+                       HorizontalOptions="Center" VerticalOptions="Center" Margin="24" />
+            </CollectionView.EmptyView>
+            <CollectionView.GroupHeaderTemplate>
+                <DataTemplate x:DataType="pages:DocumentGroup">
+                    <Label Text="{Binding Title}" Style="{StaticResource GroupHeader}" />
+                </DataTemplate>
+            </CollectionView.GroupHeaderTemplate>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="pages:DocumentListItem">
+                    <Border Style="{StaticResource Row}">
+                        <Grid ColumnDefinitions="4,72,*" ColumnSpacing="10">
+                            <BoxView Grid.Column="0" Color="{Binding StateColor}" />
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Padding="0,12">
+                                <Label Text="{Binding NumberText}" Style="{StaticResource NumBig}" TextColor="{Binding StateColor}" />
+                                <Label Text="{Binding UnitText}" Style="{StaticResource NumUnit}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Padding="0,12" Spacing="1">
+                                <Label Text="{Binding Name}" Style="{StaticResource RowName}" LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding DateText}" Style="{StaticResource RowDate}" />
+                            </VerticalStackLayout>
+                        </Grid>
                     </Border>
-                </Grid>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-    </CollectionView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
 
 </ContentPage>

@@ -28,4 +28,13 @@
   <data name="InvalidCustomDays" xml:space="preserve"><value>Введите корректное число дней</value></data>
   <data name="ValidationTitle" xml:space="preserve"><value>Проверьте форму</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="GroupNeedsAttention" xml:space="preserve"><value>Требует внимания</value></data>
+  <data name="GroupComingUp" xml:space="preserve"><value>Скоро истекают</value></data>
+  <data name="GroupAllGood" xml:space="preserve"><value>Всё в порядке</value></data>
+  <data name="UnitDays" xml:space="preserve"><value>дн.</value></data>
+  <data name="UnitDaysAgo" xml:space="preserve"><value>дн. назад</value></data>
+  <data name="UnitYears" xml:space="preserve"><value>лет</value></data>
+  <data name="ExpiredOn" xml:space="preserve"><value>Истёк {0}</value></data>
+  <data name="SaveDocument" xml:space="preserve"><value>Сохранить документ</value></data>
+  <data name="AddShort" xml:space="preserve"><value>+ Добавить</value></data>
 </root>

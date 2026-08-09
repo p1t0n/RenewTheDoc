@@ -6,23 +6,32 @@
              Title="{l:Translate AddDocumentTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="12">
+        <VerticalStackLayout Padding="18,10" Spacing="2">
 
-            <Label Text="{l:Translate NameLabel}" />
-            <Entry x:Name="NameEntry" Placeholder="{l:Translate NamePlaceholder}" />
+            <Label Text="{l:Translate NameLabel}" Style="{StaticResource FieldLabel}" />
+            <Border Style="{StaticResource Field}">
+                <Entry x:Name="NameEntry" Placeholder="{l:Translate NamePlaceholder}" />
+            </Border>
 
-            <Label Text="{l:Translate ExpiryDateLabel}" />
-            <DatePicker x:Name="ExpiryPicker" />
+            <Label Text="{l:Translate ExpiryDateLabel}" Style="{StaticResource FieldLabel}" />
+            <Border Style="{StaticResource Field}">
+                <DatePicker x:Name="ExpiryPicker" HorizontalOptions="Fill" />
+            </Border>
 
-            <Label Text="{l:Translate RemindBeforeLabel}" />
-            <Picker x:Name="RemindPicker" SelectedIndexChanged="OnRemindOptionChanged" />
-            <Entry x:Name="CustomDaysEntry" Keyboard="Numeric"
-                   Placeholder="{l:Translate CustomDaysPlaceholder}" IsVisible="False" />
+            <Label Text="{l:Translate RemindBeforeLabel}" Style="{StaticResource FieldLabel}" />
+            <Border Style="{StaticResource Field}" Padding="0">
+                <Grid x:Name="SegmentGrid" ColumnDefinitions="*,*,*,*" />
+            </Border>
+            <Border Style="{StaticResource Field}" x:Name="CustomDaysBorder" IsVisible="False" Margin="0,8,0,0">
+                <Entry x:Name="CustomDaysEntry" Keyboard="Numeric" Placeholder="{l:Translate CustomDaysPlaceholder}" />
+            </Border>
 
-            <Label Text="{l:Translate NoteLabel}" />
-            <Entry x:Name="NoteEntry" />
+            <Label Text="{l:Translate NoteLabel}" Style="{StaticResource FieldLabel}" />
+            <Border Style="{StaticResource Field}">
+                <Entry x:Name="NoteEntry" />
+            </Border>
 
-            <Button Text="{l:Translate Save}" Clicked="OnSaveClicked" Margin="0,12,0,0" />
+            <Button Text="{l:Translate SaveDocument}" Style="{StaticResource PrimaryButton}" Clicked="OnSaveClicked" Margin="0,20,0,0" />
 
         </VerticalStackLayout>
     </ScrollView>

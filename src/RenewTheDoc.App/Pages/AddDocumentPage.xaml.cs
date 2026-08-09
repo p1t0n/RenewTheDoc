@@ -7,6 +7,8 @@ public partial class AddDocumentPage : ContentPage
 {
     private readonly IDocumentStore _store;
     private readonly IReminderScheduler _scheduler;
+    private readonly List<Button> _segments = [];
+    private int _selectedSegment = 1; // default: 1 month
 
     private static readonly (string Key, RemindBefore? Value)[] RemindOptions =
     [
@@ -22,13 +24,26 @@ public partial class AddDocumentPage : ContentPage
         _store = store;
         _scheduler = scheduler;
 
-        RemindPicker.ItemsSource = RemindOptions.Select(o => L.T(o.Key)).ToList();
-        RemindPicker.SelectedIndex = 1; // default: 1 month
+        for (var i = 0; i < RemindOptions.Length; i++)
+        {
+            var index = i;
+            var button = new Button { Text = L.T(RemindOptions[i].Key) };
+            button.Clicked += (_, _) => SelectSegment(index);
+            SegmentGrid.Add(button, i);
+            _segments.Add(button);
+        }
+        SelectSegment(_selectedSegment);
+
         ExpiryPicker.Date = DateTime.Now.Date.AddMonths(6);
     }
 
-    private void OnRemindOptionChanged(object? sender, EventArgs e) =>
-        CustomDaysEntry.IsVisible = RemindOptions[RemindPicker.SelectedIndex].Value is null;
+    private void SelectSegment(int index)
+    {
+        _selectedSegment = index;
+        for (var i = 0; i < _segments.Count; i++)
+            _segments[i].Style = (Style)Application.Current!.Resources[i == index ? "SegmentSelected" : "Segment"];
+        CustomDaysBorder.IsVisible = RemindOptions[index].Value is null;
+    }
 
     private async void OnSaveClicked(object? sender, EventArgs e)
     {
@@ -40,7 +55,7 @@ public partial class AddDocumentPage : ContentPage
         }
 
         RemindBefore remindBefore;
-        var selected = RemindOptions[RemindPicker.SelectedIndex].Value;
+        var selected = RemindOptions[_selectedSegment].Value;
         if (selected is { } preset)
         {
             remindBefore = preset;

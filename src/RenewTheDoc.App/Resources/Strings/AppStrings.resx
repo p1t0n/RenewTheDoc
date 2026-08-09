@@ -28,4 +28,13 @@
   <data name="InvalidCustomDays" xml:space="preserve"><value>Enter a valid number of days</value></data>
   <data name="ValidationTitle" xml:space="preserve"><value>Check the form</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="GroupNeedsAttention" xml:space="preserve"><value>Needs attention</value></data>
+  <data name="GroupComingUp" xml:space="preserve"><value>Coming up</value></data>
+  <data name="GroupAllGood" xml:space="preserve"><value>All good</value></data>
+  <data name="UnitDays" xml:space="preserve"><value>days</value></data>
+  <data name="UnitDaysAgo" xml:space="preserve"><value>days ago</value></data>
+  <data name="UnitYears" xml:space="preserve"><value>yrs</value></data>
+  <data name="ExpiredOn" xml:space="preserve"><value>Expired {0}</value></data>
+  <data name="SaveDocument" xml:space="preserve"><value>Save document</value></data>
+  <data name="AddShort" xml:space="preserve"><value>+ Add</value></data>
 </root>

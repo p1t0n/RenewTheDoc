@@ -16,9 +16,20 @@ public static class MauiProgram
             .UseLocalNotification()
             .ConfigureFonts(fonts =>
             {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("Manrope-400.ttf", "ManropeRegular");
+                fonts.AddFont("Manrope-600.ttf", "ManropeSemiBold");
+                fonts.AddFont("Manrope-800.ttf", "ManropeExtraBold");
             });
+
+#if ANDROID
+        // Compass fields draw their own surface; kill the native EditText underline.
+        Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("NoUnderline", (handler, _) =>
+            handler.PlatformView.BackgroundTintList =
+                Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent));
+        Microsoft.Maui.Handlers.DatePickerHandler.Mapper.AppendToMapping("NoUnderline", (handler, _) =>
+            handler.PlatformView.BackgroundTintList =
+                Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent));
+#endif
 
         builder.Services.AddSingleton<IDocumentStore>(
             new SqliteDocumentStore(Path.Combine(FileSystem.AppDataDirectory, "renewthedoc.db3")));
