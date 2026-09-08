@@ -59,6 +59,42 @@ public sealed class DocumentAppService
     public Task<bool> EnsureNotificationPermissionAsync() => _scheduler.EnsurePermissionAsync();
 
     /// <summary>
+    /// Re-plans the Reminder of every stored Document from its current data — the reconciliation
+    /// startup runs once the database is open (spec §8 step 9).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A Reminder can go missing with nothing to catch at the call site: scheduling that fails after
+    /// the write succeeded, permission revoked and re-granted, a restore onto a new device, iOS
+    /// silently truncating past its 64 pending notifications. Cancel-then-schedule per Document
+    /// makes the pass idempotent — running it twice leaves the same set standing, because the cancel
+    /// clears whatever was there and an instruction of None (an expired Document) then leaves
+    /// nothing behind.
+    /// </para>
+    /// <para>
+    /// One Document's failure must not cost the others theirs, and must not stop the app from
+    /// starting, so each is scheduled inside its own try. There is nowhere useful to report to: the
+    /// pass runs with no screen in front of it, and the failures it exists to repair are exactly the
+    /// ones nobody observed the first time.
+    /// </para>
+    /// </remarks>
+    public async Task ReplanAllRemindersAsync(DateTime nowLocal)
+    {
+        foreach (var document in await _documents.GetAllAsync())
+        {
+            try
+            {
+                await _scheduler.CancelAsync(document.Id);
+                await ScheduleReminderAsync(document, nowLocal);
+            }
+            catch (Exception)
+            {
+                // Next Document; the next launch tries this one again.
+            }
+        }
+    }
+
+    /// <summary>
     /// The seam the whole refactor exists for: the aggregate decides whether and when the Reminder
     /// fires, and the scheduler is handed that decision plus the text inputs. Time arrives as an
     /// argument, so neither the domain nor the adapter reads a clock (spec §4.1).

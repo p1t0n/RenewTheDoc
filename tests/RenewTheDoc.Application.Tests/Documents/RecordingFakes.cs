@@ -120,12 +120,28 @@ public sealed class FakeReminderScheduler : IReminderScheduler
     public List<(DocumentId Id, ReminderInstruction Instruction, ReminderContent Content)> Scheduled { get; } = [];
     public List<DocumentId> Cancelled { get; } = [];
 
+    /// <summary>
+    /// What the platform would be holding right now, keyed by document — the notification queue, not
+    /// a call log. Modelled on the real adapter: one pending alert per document id, a schedule
+    /// replaces whatever stood under that id, a cancel clears it, and an instruction of None touches
+    /// nothing. Lets a test ask whether re-planning twice changed the outcome.
+    /// </summary>
+    public Dictionary<DocumentId, ReminderInstruction> Pending { get; } = [];
+
+    /// <summary>Documents whose scheduling throws — the platform failure the re-plan pass repairs.</summary>
+    public HashSet<DocumentId> FailToSchedule { get; } = [];
+
     public Task ScheduleAsync(
         DocumentId documentId, ReminderInstruction instruction, ReminderContent content)
     {
         // Logged by name, as before the port reshape, so the pinned call sequences read unchanged.
         _log.Record($"scheduler.Schedule({content.DocumentName})");
         Scheduled.Add((documentId, instruction, content));
+
+        if (FailToSchedule.Contains(documentId))
+            throw new InvalidOperationException($"scheduling refused for {documentId}");
+
+        if (instruction is not ReminderInstruction.None) Pending[documentId] = instruction;
         return Task.CompletedTask;
     }
 
@@ -133,6 +149,7 @@ public sealed class FakeReminderScheduler : IReminderScheduler
     {
         _log.Record($"scheduler.Cancel({documentId})");
         Cancelled.Add(documentId);
+        Pending.Remove(documentId);
         return Task.CompletedTask;
     }
 
