@@ -12,7 +12,7 @@ namespace RenewTheDoc.App.Services;
 /// </summary>
 public sealed class LocalNotificationReminderScheduler : IReminderScheduler
 {
-    public async Task ScheduleAsync(Document document, CancellationToken ct = default)
+    public async Task ScheduleAsync(Document document)
     {
         var plan = document.PlanReminder(DateTime.Now);
         if (plan is ReminderInstruction.None) return;
@@ -35,13 +35,13 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         await LocalNotificationCenter.Current.Show(request);
     }
 
-    public Task CancelAsync(DocumentId documentId, CancellationToken ct = default)
+    public Task CancelAsync(DocumentId documentId)
     {
         LocalNotificationCenter.Current.Cancel(ToNotificationId(documentId));
         return Task.CompletedTask;
     }
 
-    public async Task EnsurePermissionAsync(CancellationToken ct = default)
+    public async Task EnsurePermissionAsync()
     {
         if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
         {

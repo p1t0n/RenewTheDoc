@@ -15,74 +15,89 @@ public sealed class CallLog
     public void Record(string call) => _calls.Add(call);
 }
 
-public sealed class FakeDocumentStore : IDocumentStore
+public sealed class FakeDocumentRepository : IDocumentRepository
 {
     private readonly CallLog _log;
     private readonly List<Document> _documents;
 
-    public FakeDocumentStore(CallLog log, params Document[] seed)
+    public FakeDocumentRepository(CallLog log, params Document[] seed)
     {
         _log = log;
         _documents = [.. seed];
     }
 
-    public List<Document> Added { get; } = [];
-    public List<Document> Updated { get; } = [];
-    public List<DocumentId> Deleted { get; } = [];
+    /// <summary>Every upsert, in order — add and edit are the same call now.</summary>
+    public List<Document> Saved { get; } = [];
+    public List<DocumentId> Removed { get; } = [];
 
-    public Task<IReadOnlyList<Document>> GetAllAsync(CancellationToken ct = default)
+    public Task<Document?> GetAsync(DocumentId id)
+    {
+        _log.Record($"documents.Get({id})");
+        return Task.FromResult(_documents.SingleOrDefault(d => d.Id == id));
+    }
+
+    public Task<IReadOnlyList<Document>> GetAllAsync()
     {
         _log.Record("documents.GetAll");
         return Task.FromResult<IReadOnlyList<Document>>(_documents.ToList());
     }
 
-    public Task AddAsync(Document document, CancellationToken ct = default)
+    public Task SaveAsync(Document document)
     {
-        _log.Record($"documents.Add({document.Name})");
-        Added.Add(document);
+        _log.Record($"documents.Save({document.Name})");
+        Saved.Add(document);
+        _documents.RemoveAll(d => d.Id == document.Id);
         _documents.Add(document);
         return Task.CompletedTask;
     }
 
-    public Task UpdateAsync(Document document, CancellationToken ct = default)
+    public Task RemoveAsync(DocumentId id)
     {
-        _log.Record($"documents.Update({document.Name})");
-        Updated.Add(document);
-        return Task.CompletedTask;
-    }
-
-    public Task DeleteAsync(DocumentId documentId, CancellationToken ct = default)
-    {
-        _log.Record($"documents.Delete({documentId})");
-        Deleted.Add(documentId);
+        _log.Record($"documents.Remove({id})");
+        Removed.Add(id);
+        _documents.RemoveAll(d => d.Id == id);
         return Task.CompletedTask;
     }
 }
 
-public sealed class FakeOwnerStore : IOwnerStore
+public sealed class FakeOwnerRepository : IOwnerRepository
 {
     private readonly CallLog _log;
     private readonly List<Owner> _owners;
 
-    public FakeOwnerStore(CallLog log, params Owner[] seed)
+    public FakeOwnerRepository(CallLog log, params Owner[] seed)
     {
         _log = log;
         _owners = [.. seed];
     }
 
-    public Owner? LastAdded { get; private set; }
+    public Owner? LastSaved { get; private set; }
 
-    public Task<IReadOnlyList<Owner>> GetAllAsync(CancellationToken ct = default)
+    public Task<Owner?> GetAsync(OwnerId id)
+    {
+        _log.Record($"owners.Get({id})");
+        return Task.FromResult(_owners.SingleOrDefault(o => o.Id == id));
+    }
+
+    public Task<IReadOnlyList<Owner>> GetAllAsync()
     {
         _log.Record("owners.GetAll");
         return Task.FromResult<IReadOnlyList<Owner>>(_owners.ToList());
     }
 
-    public Task AddAsync(Owner owner, CancellationToken ct = default)
+    public Task SaveAsync(Owner owner)
     {
-        _log.Record($"owners.Add({owner.Name})");
-        LastAdded = owner;
+        _log.Record($"owners.Save({owner.Name})");
+        LastSaved = owner;
+        _owners.RemoveAll(o => o.Id == owner.Id);
         _owners.Add(owner);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveAsync(OwnerId id)
+    {
+        _log.Record($"owners.Remove({id})");
+        _owners.RemoveAll(o => o.Id == id);
         return Task.CompletedTask;
     }
 }
@@ -96,21 +111,21 @@ public sealed class FakeReminderScheduler : IReminderScheduler
     public List<Document> Scheduled { get; } = [];
     public List<DocumentId> Cancelled { get; } = [];
 
-    public Task ScheduleAsync(Document document, CancellationToken ct = default)
+    public Task ScheduleAsync(Document document)
     {
         _log.Record($"scheduler.Schedule({document.Name})");
         Scheduled.Add(document);
         return Task.CompletedTask;
     }
 
-    public Task CancelAsync(DocumentId documentId, CancellationToken ct = default)
+    public Task CancelAsync(DocumentId documentId)
     {
         _log.Record($"scheduler.Cancel({documentId})");
         Cancelled.Add(documentId);
         return Task.CompletedTask;
     }
 
-    public Task EnsurePermissionAsync(CancellationToken ct = default)
+    public Task EnsurePermissionAsync()
     {
         _log.Record("scheduler.EnsurePermission");
         return Task.CompletedTask;

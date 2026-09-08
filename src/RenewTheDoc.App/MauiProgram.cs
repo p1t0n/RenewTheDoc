@@ -4,6 +4,7 @@ using RenewTheDoc.App.Pages;
 using RenewTheDoc.App.Services;
 using RenewTheDoc.Application.Documents;
 using RenewTheDoc.Domain.Documents;
+using RenewTheDoc.Persistence;
 using RenewTheDoc.Persistence.Documents;
 
 namespace RenewTheDoc.App;
@@ -36,9 +37,16 @@ public static class MauiProgram
                 Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent));
 #endif
 
-        var db = new SqliteDocumentStore(Path.Combine(FileSystem.AppDataDirectory, "renewthedoc.db3"));
-        builder.Services.AddSingleton<IDocumentStore>(db);
-        builder.Services.AddSingleton<IOwnerStore>(db);
+        // One connection for the app, its tables created here and only here. Blocking is deliberate:
+        // MAUI offers no async startup hook and the tables must exist before the first page appears.
+        // Two CREATE TABLE statements, and SqliteDatabase.InitializeAsync deliberately does not
+        // capture this thread's context — otherwise waiting here deadlocks it (spec §5.4).
+        var database = new SqliteDatabase(Path.Combine(FileSystem.AppDataDirectory, "renewthedoc.db3"));
+        database.InitializeAsync().GetAwaiter().GetResult();
+
+        builder.Services.AddSingleton(database);
+        builder.Services.AddSingleton<IDocumentRepository, SqliteDocumentRepository>();
+        builder.Services.AddSingleton<IOwnerRepository, SqliteOwnerRepository>();
         builder.Services.AddSingleton<IReminderScheduler, LocalNotificationReminderScheduler>();
         builder.Services.AddSingleton<DocumentAppService>();
         builder.Services.AddSingleton<OwnerAppService>();
