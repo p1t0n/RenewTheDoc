@@ -2,7 +2,9 @@
 
 namespace RenewTheDoc.App;
 
-public partial class App : Application
+// Qualified: the RenewTheDoc.Application namespace shadows the unqualified MAUI type here, and a
+// using-alias cannot win against an enclosing namespace member. Same at every Application.Current.
+public partial class App : Microsoft.Maui.Controls.Application
 {
 	public App()
 	{

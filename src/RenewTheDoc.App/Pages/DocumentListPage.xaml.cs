@@ -1,27 +1,25 @@
 using RenewTheDoc.App.Localization;
-using RenewTheDoc.App.Services;
+using RenewTheDoc.Application.Documents;
 using RenewTheDoc.Domain.Documents;
 
 namespace RenewTheDoc.App.Pages;
 
 public partial class DocumentListPage : ContentPage
 {
-    private readonly IDocumentStore _store;
-    private readonly IOwnerStore _owners;
-    private readonly IReminderScheduler _scheduler;
+    private readonly DocumentAppService _documents;
+    private readonly OwnerAppService _owners;
 
-    public DocumentListPage(IDocumentStore store, IOwnerStore owners, IReminderScheduler scheduler)
+    public DocumentListPage(DocumentAppService documents, OwnerAppService owners)
     {
         InitializeComponent();
-        _store = store;
+        _documents = documents;
         _owners = owners;
-        _scheduler = scheduler;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await LocalNotificationReminderScheduler.EnsurePermissionAsync();
+        await _documents.EnsureNotificationPermissionAsync();
         await RefreshAsync();
     }
 
@@ -34,26 +32,18 @@ public partial class DocumentListPage : ContentPage
     private async Task RefreshAsync()
     {
         var today = DateOnly.FromDateTime(DateTime.Now);
-        var owners = await _owners.GetAllAsync();
+        var owners = await _owners.ListAsync();
         var ownerNames = owners.ToDictionary(o => o.Id, o => o.Name);
 
-        var documents = DocumentListOrder.Sorted(await _store.GetAllAsync(), today).AsEnumerable();
-        if (_ownerFilterActive)
-            documents = documents.Where(d => d.OwnerId == _ownerFilter);
-        if (_statusFilter is { } state)
-            documents = documents.Where(d => d.GetState(today) == state);
-
-        var groups = documents
-            .GroupBy(d => d.GetState(today))
-            .OrderBy(g => g.Key)
+        var groups = (await _documents.ListAsync(_ownerFilterActive, _ownerFilter, _statusFilter, today))
             .Select(g => new DocumentGroup(
-                L.T(g.Key switch
+                L.T(g.State switch
                 {
                     DocumentState.Expired => "GroupNeedsAttention",
                     DocumentState.ExpiringSoon => "GroupComingUp",
                     _ => "GroupAllGood",
                 }),
-                g.Select(d => DocumentListItem.From(d, today,
+                g.Documents.Select(d => DocumentListItem.From(d, today,
                     !_ownerFilterActive && d.OwnerId is { } oid ? ownerNames.GetValueOrDefault(oid) : null))))
             .ToList();
 
@@ -121,10 +111,10 @@ public partial class DocumentListPage : ContentPage
         return chip;
     }
 
-    private static Color Tok(string key) => (Color)Application.Current!.Resources[key];
+    private static Color Tok(string key) => (Color)Microsoft.Maui.Controls.Application.Current!.Resources[key];
 
     private static Color StateColor(DocumentState state) =>
-        Application.Current!.RequestedTheme == AppTheme.Dark
+        Microsoft.Maui.Controls.Application.Current!.RequestedTheme == AppTheme.Dark
             ? state switch
             {
                 DocumentState.Expired => Color.FromArgb("#E07A6C"),
@@ -155,8 +145,7 @@ public partial class DocumentListPage : ContentPage
             L.T("DeleteConfirmTitle"), L.F("DeleteConfirmText", item.Name), L.T("Delete"), L.T("Cancel"));
         if (!confirmed) return;
 
-        await _scheduler.CancelAsync(item.Source.Id);
-        await _store.DeleteAsync(item.Source.Id);
+        await _documents.DeleteAsync(item.Source.Id);
         await RefreshAsync();
     }
 }
@@ -186,7 +175,7 @@ public sealed record DocumentListItem(Document Source, string Name, string DateT
         if (d.CountryCode is { } cc) dateText += $" · {cc}";
         if (ownerName is not null) dateText = $"{ownerName} · {dateText}";
 
-        var color = Application.Current!.RequestedTheme == AppTheme.Dark
+        var color = Microsoft.Maui.Controls.Application.Current!.RequestedTheme == AppTheme.Dark
             ? state switch
             {
                 DocumentState.Expired => Color.FromArgb("#E07A6C"),

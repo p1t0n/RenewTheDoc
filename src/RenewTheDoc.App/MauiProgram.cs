@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Plugin.LocalNotification;
 using RenewTheDoc.App.Pages;
 using RenewTheDoc.App.Services;
+using RenewTheDoc.Application.Documents;
 using RenewTheDoc.Domain.Documents;
 using RenewTheDoc.Persistence.Documents;
 
@@ -39,6 +40,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IDocumentStore>(db);
         builder.Services.AddSingleton<IOwnerStore>(db);
         builder.Services.AddSingleton<IReminderScheduler, LocalNotificationReminderScheduler>();
+        builder.Services.AddSingleton<DocumentAppService>();
+        builder.Services.AddSingleton<OwnerAppService>();
         builder.Services.AddTransient<DocumentListPage>();
         builder.Services.AddTransient<AddDocumentPage>();
 

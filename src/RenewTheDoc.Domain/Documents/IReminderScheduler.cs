@@ -8,4 +8,7 @@ public interface IReminderScheduler
 {
     Task ScheduleAsync(Document document, CancellationToken ct = default);
     Task CancelAsync(Guid documentId, CancellationToken ct = default);
+
+    /// <summary>Asks the user for notification permission if it has not been granted yet.</summary>
+    Task EnsurePermissionAsync(CancellationToken ct = default);
 }

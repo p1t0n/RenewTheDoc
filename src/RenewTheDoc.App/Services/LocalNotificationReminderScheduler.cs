@@ -41,7 +41,7 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         return Task.CompletedTask;
     }
 
-    public static async Task EnsurePermissionAsync()
+    public async Task EnsurePermissionAsync(CancellationToken ct = default)
     {
         if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
         {
