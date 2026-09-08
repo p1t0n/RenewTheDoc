@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Domain tests
+    name: Domain and application tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,6 +16,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet test tests/RenewTheDoc.Domain.Tests --nologo
+      - run: dotnet test tests/RenewTheDoc.Application.Tests --nologo
 
   android:
     name: Android build

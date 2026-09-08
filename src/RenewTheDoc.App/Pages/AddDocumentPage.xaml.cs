@@ -1,5 +1,6 @@
 using System.Globalization;
 using RenewTheDoc.App.Localization;
+using RenewTheDoc.Application.Documents;
 using RenewTheDoc.Domain.Documents;
 
 namespace RenewTheDoc.App.Pages;
@@ -7,9 +8,8 @@ namespace RenewTheDoc.App.Pages;
 [QueryProperty(nameof(EditTarget), "edit")]
 public partial class AddDocumentPage : ContentPage
 {
-    private readonly IDocumentStore _store;
-    private readonly IOwnerStore _owners;
-    private readonly IReminderScheduler _scheduler;
+    private readonly DocumentAppService _documents;
+    private readonly OwnerAppService _owners;
     private readonly List<Button> _segments = [];
     private readonly IReadOnlyList<(string Code, string Name)> _countries;
     private List<Owner> _ownerList = [];
@@ -31,12 +31,11 @@ public partial class AddDocumentPage : ContentPage
         set { _editTarget = value; ApplyEditTarget(); }
     }
 
-    public AddDocumentPage(IDocumentStore store, IOwnerStore owners, IReminderScheduler scheduler)
+    public AddDocumentPage(DocumentAppService documents, OwnerAppService owners)
     {
         InitializeComponent();
-        _store = store;
+        _documents = documents;
         _owners = owners;
-        _scheduler = scheduler;
 
         for (var i = 0; i < RemindOptions.Length; i++)
         {
@@ -65,7 +64,7 @@ public partial class AddDocumentPage : ContentPage
     /// <summary>Rebuilds the owner picker: Me · dictionary owners · "+ New owner…".</summary>
     private async Task LoadOwnersAsync(Guid? select)
     {
-        _ownerList = (await _owners.GetAllAsync()).ToList();
+        _ownerList = (await _owners.ListAsync()).ToList();
         OwnerPicker.ItemsSource = new[] { L.T("OwnerMe") }
             .Concat(_ownerList.Select(o => o.Name))
             .Concat([L.T("OwnerNew")])
@@ -89,8 +88,7 @@ public partial class AddDocumentPage : ContentPage
                 OwnerPicker.SelectedIndex = 0;
                 return;
             }
-            var owner = new Owner { Name = name };
-            await _owners.AddAsync(owner);
+            var owner = await _owners.AddAsync(name);
             await LoadOwnersAsync(owner.Id);
             return;
         }
@@ -129,7 +127,7 @@ public partial class AddDocumentPage : ContentPage
     {
         _selectedSegment = index;
         for (var i = 0; i < _segments.Count; i++)
-            _segments[i].Style = (Style)Application.Current!.Resources[i == index ? "SegmentSelected" : "Segment"];
+            _segments[i].Style = (Style)Microsoft.Maui.Controls.Application.Current!.Resources[i == index ? "SegmentSelected" : "Segment"];
         CustomDaysBorder.IsVisible = RemindOptions[index].Value is null;
     }
 
@@ -171,14 +169,12 @@ public partial class AddDocumentPage : ContentPage
 
         if (_editTarget is null)
         {
-            await _store.AddAsync(document);
+            await _documents.AddAsync(document);
         }
         else
         {
-            await _store.UpdateAsync(document);
-            await _scheduler.CancelAsync(document.Id); // edit = re-creation (CONTEXT.md)
+            await _documents.EditAsync(document);
         }
-        await _scheduler.ScheduleAsync(document);
         await Shell.Current.GoToAsync("..");
     }
 
@@ -189,8 +185,7 @@ public partial class AddDocumentPage : ContentPage
             L.T("DeleteConfirmTitle"), L.F("DeleteConfirmText", doc.Name), L.T("Delete"), L.T("Cancel"));
         if (!confirmed) return;
 
-        await _scheduler.CancelAsync(doc.Id);
-        await _store.DeleteAsync(doc.Id);
+        await _documents.DeleteAsync(doc.Id);
         await Shell.Current.GoToAsync("..");
     }
 }
