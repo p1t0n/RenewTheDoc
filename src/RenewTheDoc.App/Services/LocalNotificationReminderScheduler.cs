@@ -35,7 +35,7 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         await LocalNotificationCenter.Current.Show(request);
     }
 
-    public Task CancelAsync(Guid documentId, CancellationToken ct = default)
+    public Task CancelAsync(DocumentId documentId, CancellationToken ct = default)
     {
         LocalNotificationCenter.Current.Cancel(ToNotificationId(documentId));
         return Task.CompletedTask;
@@ -49,5 +49,7 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         }
     }
 
-    private static int ToNotificationId(Guid id) => id.GetHashCode() & 0x7FFFFFFF;
+    // Unwraps to the Guid so the mapping stays bit-for-bit what it was before typed ids — a
+    // different hash would orphan every already-scheduled notification. Still REN-54's known bug.
+    private static int ToNotificationId(DocumentId id) => id.Value.GetHashCode() & 0x7FFFFFFF;
 }

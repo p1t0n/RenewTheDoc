@@ -12,10 +12,10 @@ public class DocumentAppServiceTests
     private static readonly DateOnly Today = new(2026, 1, 1);
 
     private static Document Doc(string name, DateOnly expiry, int remindDays = 30,
-        Guid? id = null, Guid? ownerId = null) =>
+        DocumentId? id = null, OwnerId? ownerId = null) =>
         new()
         {
-            Id = id ?? Guid.NewGuid(),
+            Id = id ?? DocumentId.New(),
             Name = name,
             ExpiryDate = expiry,
             RemindBefore = new RemindBefore(remindDays),
@@ -48,7 +48,7 @@ public class DocumentAppServiceTests
     public async Task Edit_updates_then_cancels_then_reschedules()
     {
         var log = new CallLog();
-        var id = Guid.NewGuid();
+        var id = DocumentId.New();
         var store = new FakeDocumentStore(log);
         var scheduler = new FakeReminderScheduler(log);
         var service = new DocumentAppService(store, scheduler);
@@ -69,7 +69,7 @@ public class DocumentAppServiceTests
     public async Task Delete_cancels_then_deletes()
     {
         var log = new CallLog();
-        var id = Guid.NewGuid();
+        var id = DocumentId.New();
         var store = new FakeDocumentStore(log);
         var scheduler = new FakeReminderScheduler(log);
         var service = new DocumentAppService(store, scheduler);
@@ -141,7 +141,7 @@ public class DocumentAppServiceTests
     [Fact]
     public async Task List_with_no_owner_filter_returns_everyones_documents()
     {
-        var ownerId = Guid.NewGuid();
+        var ownerId = OwnerId.New();
         var service = Service(
             Doc("Mine", new DateOnly(2027, 1, 1)),
             Doc("Theirs", new DateOnly(2027, 2, 1), ownerId: ownerId));
@@ -154,7 +154,7 @@ public class DocumentAppServiceTests
     [Fact]
     public async Task List_filtered_to_Me_returns_only_documents_without_an_owner()
     {
-        var ownerId = Guid.NewGuid();
+        var ownerId = OwnerId.New();
         var service = Service(
             Doc("Mine", new DateOnly(2027, 1, 1)),
             Doc("Theirs", new DateOnly(2027, 2, 1), ownerId: ownerId));
@@ -167,7 +167,7 @@ public class DocumentAppServiceTests
     [Fact]
     public async Task List_filtered_to_an_owner_returns_only_their_documents()
     {
-        var ownerId = Guid.NewGuid();
+        var ownerId = OwnerId.New();
         var service = Service(
             Doc("Mine", new DateOnly(2027, 1, 1)),
             Doc("Theirs", new DateOnly(2027, 2, 1), ownerId: ownerId));

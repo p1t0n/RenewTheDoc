@@ -26,6 +26,10 @@
   <data name="NotificationText" xml:space="preserve"><value>{0} истекает {1}</value></data>
   <data name="NameRequired" xml:space="preserve"><value>Укажите название</value></data>
   <data name="InvalidCustomDays" xml:space="preserve"><value>Введите корректное число дней</value></data>
+  <data name="DocumentNameTooLong" xml:space="preserve"><value>Название слишком длинное</value></data>
+  <data name="CountryCodeInvalid" xml:space="preserve"><value>Выберите корректную страну</value></data>
+  <data name="OwnerNameRequired" xml:space="preserve"><value>Укажите имя владельца</value></data>
+  <data name="OwnerNameTooLong" xml:space="preserve"><value>Имя владельца слишком длинное</value></data>
   <data name="ValidationTitle" xml:space="preserve"><value>Проверьте форму</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="GroupNeedsAttention" xml:space="preserve"><value>Требует внимания</value></data>

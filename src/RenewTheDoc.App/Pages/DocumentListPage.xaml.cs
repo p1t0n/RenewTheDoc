@@ -26,7 +26,7 @@ public partial class DocumentListPage : ContentPage
     // Filter state (page-level, not persisted). _ownerFilterActive false = "All";
     // when active, _ownerFilter null means "Me" (documents without an owner).
     private bool _ownerFilterActive;
-    private Guid? _ownerFilter;
+    private OwnerId? _ownerFilter;
     private DocumentState? _statusFilter;
 
     private async Task RefreshAsync()

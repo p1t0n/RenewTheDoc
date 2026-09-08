@@ -29,24 +29,25 @@ public sealed class SqliteDocumentStore : IDocumentStore, IOwnerStore
         await _db.UpdateAsync(DocumentRow.From(document));
     }
 
-    public async Task DeleteAsync(Guid documentId, CancellationToken ct = default)
+    public async Task DeleteAsync(DocumentId documentId, CancellationToken ct = default)
     {
         await EnsureInitializedAsync();
-        await _db.DeleteAsync<DocumentRow>(documentId);
+        // .Value because sqlite-net binds the primary key through a type switch over known types.
+        await _db.DeleteAsync<DocumentRow>(documentId.Value);
     }
 
     async Task<IReadOnlyList<Owner>> IOwnerStore.GetAllAsync(CancellationToken ct)
     {
         await EnsureInitializedAsync();
         var rows = await _db.Table<OwnerRow>().ToListAsync();
-        return rows.Select(r => new Owner { Id = r.Id, Name = r.Name })
+        return rows.Select(r => new Owner { Id = new OwnerId(r.Id), Name = r.Name })
             .OrderBy(o => o.Name, StringComparer.CurrentCulture).ToList();
     }
 
     public async Task AddAsync(Owner owner, CancellationToken ct = default)
     {
         await EnsureInitializedAsync();
-        await _db.InsertAsync(new OwnerRow { Id = owner.Id, Name = owner.Name });
+        await _db.InsertAsync(new OwnerRow { Id = owner.Id.Value, Name = owner.Name });
     }
 
     private async Task EnsureInitializedAsync()
@@ -75,26 +76,27 @@ public sealed class SqliteDocumentStore : IDocumentStore, IOwnerStore
         public string? CountryCode { get; set; }
         public Guid? OwnerId { get; set; }
 
+        // The row is where typed ids unwrap: the columns are plain Guids.
         public static DocumentRow From(Document d) => new()
         {
-            Id = d.Id,
+            Id = d.Id.Value,
             Name = d.Name,
             ExpiryDate = d.ExpiryDate.ToString("O"),
             RemindBeforeDays = d.RemindBefore.Days,
             Note = d.Note,
             CountryCode = d.CountryCode,
-            OwnerId = d.OwnerId,
+            OwnerId = d.OwnerId?.Value,
         };
 
         public Document ToDocument() => new()
         {
-            Id = Id,
+            Id = new DocumentId(Id),
             Name = Name,
             ExpiryDate = DateOnly.Parse(ExpiryDate),
             RemindBefore = new RemindBefore(RemindBeforeDays),
             Note = Note,
             CountryCode = CountryCode,
-            OwnerId = OwnerId,
+            OwnerId = OwnerId is { } ownerId ? new OwnerId(ownerId) : null,
         };
     }
 }

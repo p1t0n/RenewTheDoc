@@ -28,7 +28,7 @@ public sealed class FakeDocumentStore : IDocumentStore
 
     public List<Document> Added { get; } = [];
     public List<Document> Updated { get; } = [];
-    public List<Guid> Deleted { get; } = [];
+    public List<DocumentId> Deleted { get; } = [];
 
     public Task<IReadOnlyList<Document>> GetAllAsync(CancellationToken ct = default)
     {
@@ -51,7 +51,7 @@ public sealed class FakeDocumentStore : IDocumentStore
         return Task.CompletedTask;
     }
 
-    public Task DeleteAsync(Guid documentId, CancellationToken ct = default)
+    public Task DeleteAsync(DocumentId documentId, CancellationToken ct = default)
     {
         _log.Record($"documents.Delete({documentId})");
         Deleted.Add(documentId);
@@ -94,7 +94,7 @@ public sealed class FakeReminderScheduler : IReminderScheduler
     public FakeReminderScheduler(CallLog log) => _log = log;
 
     public List<Document> Scheduled { get; } = [];
-    public List<Guid> Cancelled { get; } = [];
+    public List<DocumentId> Cancelled { get; } = [];
 
     public Task ScheduleAsync(Document document, CancellationToken ct = default)
     {
@@ -103,7 +103,7 @@ public sealed class FakeReminderScheduler : IReminderScheduler
         return Task.CompletedTask;
     }
 
-    public Task CancelAsync(Guid documentId, CancellationToken ct = default)
+    public Task CancelAsync(DocumentId documentId, CancellationToken ct = default)
     {
         _log.Record($"scheduler.Cancel({documentId})");
         Cancelled.Add(documentId);

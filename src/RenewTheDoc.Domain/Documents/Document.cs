@@ -3,7 +3,7 @@ namespace RenewTheDoc.Domain.Documents;
 /// <summary>A thing the user wants to renew before it stops being valid. See CONTEXT.md.</summary>
 public sealed record Document
 {
-    public Guid Id { get; init; } = Guid.NewGuid();
+    public DocumentId Id { get; init; } = DocumentId.New();
     public required string Name { get; init; }
     public required DateOnly ExpiryDate { get; init; }
     public required RemindBefore RemindBefore { get; init; }
@@ -13,5 +13,5 @@ public sealed record Document
     public string? CountryCode { get; init; }
 
     /// <summary>Optional Owner; null means the document belongs to the user ("Me").</summary>
-    public Guid? OwnerId { get; init; }
+    public OwnerId? OwnerId { get; init; }
 }
