@@ -21,17 +21,17 @@ public sealed record Document
         string name,
         DateOnly expiryDate,
         RemindBefore remindBefore,
+        DocumentOwner owner,
         string? note,
-        Country? country,
-        OwnerId? ownerId)
+        Country? country)
     {
         Id = id;
         Name = name;
         ExpiryDate = expiryDate;
         RemindBefore = remindBefore;
+        Owner = owner;
         Note = note;
         Country = country;
-        OwnerId = ownerId;
     }
 
     public DocumentId Id { get; }
@@ -44,23 +44,26 @@ public sealed record Document
 
     public RemindBefore RemindBefore { get; }
 
+    /// <summary>
+    /// Who the document belongs to — the user themselves or a named person. Always a value, never
+    /// an absence: <see cref="DocumentOwner.Me"/> is a case of its own (spec §3.4).
+    /// </summary>
+    public DocumentOwner Owner { get; }
+
     public string? Note { get; }
 
     /// <summary>Optional Country this document is issued/valid in.</summary>
     public Country? Country { get; }
-
-    /// <summary>Optional Owner; null means the document belongs to the user ("Me").</summary>
-    public OwnerId? OwnerId { get; }
 
     /// <summary>A brand-new Document, with a fresh identity.</summary>
     public static Document Create(
         string name,
         DateOnly expiryDate,
         RemindBefore remindBefore,
+        DocumentOwner owner,
         string? note = null,
-        Country? country = null,
-        OwnerId? ownerId = null) =>
-        new(DocumentId.New(), ValidatedName(name), expiryDate, remindBefore, note, country, ownerId);
+        Country? country = null) =>
+        new(DocumentId.New(), ValidatedName(name), expiryDate, remindBefore, owner, note, country);
 
     /// <summary>
     /// Rebuilds a stored Document under its existing identity. Runs the same invariants as
@@ -72,10 +75,10 @@ public sealed record Document
         string name,
         DateOnly expiryDate,
         RemindBefore remindBefore,
+        DocumentOwner owner,
         string? note = null,
-        Country? country = null,
-        OwnerId? ownerId = null) =>
-        new(id, ValidatedName(name), expiryDate, remindBefore, note, country, ownerId);
+        Country? country = null) =>
+        new(id, ValidatedName(name), expiryDate, remindBefore, owner, note, country);
 
     /// <summary>
     /// One composite edit, matching the UI's single atomic save, returning a new instance under the
@@ -86,10 +89,10 @@ public sealed record Document
         string name,
         DateOnly expiryDate,
         RemindBefore remindBefore,
+        DocumentOwner owner,
         string? note = null,
-        Country? country = null,
-        OwnerId? ownerId = null) =>
-        new(Id, ValidatedName(name), expiryDate, remindBefore, note, country, ownerId);
+        Country? country = null) =>
+        new(Id, ValidatedName(name), expiryDate, remindBefore, owner, note, country);
 
     /// <summary>Derives the document's state from today's date. Expiry date itself is not yet expired.</summary>
     public DocumentState StateOn(DateOnly today)

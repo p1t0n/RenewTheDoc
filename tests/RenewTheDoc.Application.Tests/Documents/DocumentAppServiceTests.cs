@@ -12,10 +12,13 @@ public class DocumentAppServiceTests
     private static readonly DateOnly Today = new(2026, 1, 1);
 
     private static Document Doc(string name, DateOnly expiry, int remindDays = 30,
-        DocumentId? id = null, OwnerId? ownerId = null) =>
-        id is { } stored
-            ? Document.Restore(stored, name, expiry, new RemindBefore(remindDays), ownerId: ownerId)
-            : Document.Create(name, expiry, new RemindBefore(remindDays), ownerId: ownerId);
+        DocumentId? id = null, DocumentOwner? owner = null)
+    {
+        var documentOwner = owner ?? DocumentOwner.Me;
+        return id is { } stored
+            ? Document.Restore(stored, name, expiry, new RemindBefore(remindDays), documentOwner)
+            : Document.Create(name, expiry, new RemindBefore(remindDays), documentOwner);
+    }
 
     [Fact]
     public async Task Add_saves_then_schedules()
@@ -98,7 +101,7 @@ public class DocumentAppServiceTests
         var scheduler = new FakeReminderScheduler(log);
         var service = new DocumentAppService(store, scheduler);
 
-        await service.ListAsync(ownerFilterActive: false, ownerId: null, statusFilter: null, Today);
+        await service.ListAsync(ownerFilter: null, statusFilter: null, Today);
 
         Assert.Equal(["documents.GetAll"], log.Calls);
     }
@@ -111,7 +114,7 @@ public class DocumentAppServiceTests
         var expired = Doc("Expired", new DateOnly(2025, 12, 1));
         var service = Service(ok, soon, expired);
 
-        var groups = await service.ListAsync(false, null, null, Today);
+        var groups = await service.ListAsync(null, null, Today);
 
         Assert.Equal(
             [DocumentState.Expired, DocumentState.ExpiringSoon, DocumentState.Ok],
@@ -128,7 +131,7 @@ public class DocumentAppServiceTests
         var sooner = Doc("Sooner", new DateOnly(2027, 1, 1));
         var service = Service(later, sooner);
 
-        var groups = await service.ListAsync(false, null, null, Today);
+        var groups = await service.ListAsync(null, null, Today);
 
         Assert.Equal(["Sooner", "Later"], Assert.Single(groups).Documents.Select(d => d.Name));
     }
@@ -136,25 +139,25 @@ public class DocumentAppServiceTests
     [Fact]
     public async Task List_with_no_owner_filter_returns_everyones_documents()
     {
-        var ownerId = OwnerId.New();
+        var them = new DocumentOwner.Person(OwnerId.New());
         var service = Service(
             Doc("Mine", new DateOnly(2027, 1, 1)),
-            Doc("Theirs", new DateOnly(2027, 2, 1), ownerId: ownerId));
+            Doc("Theirs", new DateOnly(2027, 2, 1), owner: them));
 
-        var groups = await service.ListAsync(ownerFilterActive: false, ownerId: null, null, Today);
+        var groups = await service.ListAsync(ownerFilter: null, null, Today);
 
         Assert.Equal(["Mine", "Theirs"], Assert.Single(groups).Documents.Select(d => d.Name));
     }
 
     [Fact]
-    public async Task List_filtered_to_Me_returns_only_documents_without_an_owner()
+    public async Task List_filtered_to_Me_returns_only_the_users_own_documents()
     {
-        var ownerId = OwnerId.New();
+        var them = new DocumentOwner.Person(OwnerId.New());
         var service = Service(
             Doc("Mine", new DateOnly(2027, 1, 1)),
-            Doc("Theirs", new DateOnly(2027, 2, 1), ownerId: ownerId));
+            Doc("Theirs", new DateOnly(2027, 2, 1), owner: them));
 
-        var groups = await service.ListAsync(ownerFilterActive: true, ownerId: null, null, Today);
+        var groups = await service.ListAsync(DocumentOwner.Me, null, Today);
 
         Assert.Equal(["Mine"], Assert.Single(groups).Documents.Select(d => d.Name));
     }
@@ -162,14 +165,42 @@ public class DocumentAppServiceTests
     [Fact]
     public async Task List_filtered_to_an_owner_returns_only_their_documents()
     {
-        var ownerId = OwnerId.New();
+        var them = new DocumentOwner.Person(OwnerId.New());
         var service = Service(
             Doc("Mine", new DateOnly(2027, 1, 1)),
-            Doc("Theirs", new DateOnly(2027, 2, 1), ownerId: ownerId));
+            Doc("Theirs", new DateOnly(2027, 2, 1), owner: them));
 
-        var groups = await service.ListAsync(ownerFilterActive: true, ownerId, null, Today);
+        var groups = await service.ListAsync(them, null, Today);
 
         Assert.Equal(["Theirs"], Assert.Single(groups).Documents.Select(d => d.Name));
+    }
+
+    /// <summary>
+    /// The filter compares owners by value, so a chip built from a fresh Person instance still
+    /// matches the stored one — the list page rebuilds its chips on every refresh.
+    /// </summary>
+    [Fact]
+    public async Task List_filtered_to_an_owner_matches_by_value_not_by_instance()
+    {
+        var ownerId = OwnerId.New();
+        var service = Service(
+            Doc("Theirs", new DateOnly(2027, 2, 1), owner: new DocumentOwner.Person(ownerId)));
+
+        var groups = await service.ListAsync(new DocumentOwner.Person(ownerId), null, Today);
+
+        Assert.Equal(["Theirs"], Assert.Single(groups).Documents.Select(d => d.Name));
+    }
+
+    [Fact]
+    public async Task List_filtered_to_a_different_owner_returns_nothing()
+    {
+        var service = Service(
+            Doc("Mine", new DateOnly(2027, 1, 1)),
+            Doc("Theirs", new DateOnly(2027, 2, 1), owner: new DocumentOwner.Person(OwnerId.New())));
+
+        var groups = await service.ListAsync(new DocumentOwner.Person(OwnerId.New()), null, Today);
+
+        Assert.Empty(groups);
     }
 
     [Fact]
@@ -180,7 +211,7 @@ public class DocumentAppServiceTests
             Doc("Soon", new DateOnly(2026, 1, 20)),
             Doc("Expired", new DateOnly(2025, 12, 1)));
 
-        var groups = await service.ListAsync(false, null, DocumentState.ExpiringSoon, Today);
+        var groups = await service.ListAsync(null, DocumentState.ExpiringSoon, Today);
 
         var group = Assert.Single(groups);
         Assert.Equal(DocumentState.ExpiringSoon, group.State);
@@ -190,7 +221,7 @@ public class DocumentAppServiceTests
     [Fact]
     public async Task List_of_nothing_is_no_groups()
     {
-        var groups = await Service().ListAsync(false, null, null, Today);
+        var groups = await Service().ListAsync(null, null, Today);
 
         Assert.Empty(groups);
     }

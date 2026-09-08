@@ -40,7 +40,7 @@ public sealed class SqliteDocumentStore : IDocumentStore, IOwnerStore
     {
         await EnsureInitializedAsync();
         var rows = await _db.Table<OwnerRow>().ToListAsync();
-        return rows.Select(r => new Owner { Id = new OwnerId(r.Id), Name = r.Name })
+        return rows.Select(r => Owner.Restore(new OwnerId(r.Id), r.Name))
             .OrderBy(o => o.Name, StringComparer.CurrentCulture).ToList();
     }
 
@@ -76,7 +76,8 @@ public sealed class SqliteDocumentStore : IDocumentStore, IOwnerStore
         public string? CountryCode { get; set; }
         public Guid? OwnerId { get; set; }
 
-        // The row is where typed ids unwrap: the columns are plain Guids.
+        // The row is where typed ids unwrap: the columns are plain Guids. It is also the one place
+        // Me collapses to a null column — the schema is unchanged by the modelling move (spec §5.5).
         public static DocumentRow From(Document d) => new()
         {
             Id = d.Id.Value,
@@ -85,7 +86,7 @@ public sealed class SqliteDocumentStore : IDocumentStore, IOwnerStore
             RemindBeforeDays = d.RemindBefore.Days,
             Note = d.Note,
             CountryCode = d.Country?.Code,
-            OwnerId = d.OwnerId?.Value,
+            OwnerId = d.Owner is DocumentOwner.Person person ? person.Id.Value : null,
         };
 
         // Restore, not a constructor: a row that breaks an invariant must fail loud rather than
@@ -95,8 +96,10 @@ public sealed class SqliteDocumentStore : IDocumentStore, IOwnerStore
             Name,
             DateOnly.Parse(ExpiryDate),
             new RemindBefore(RemindBeforeDays),
+            OwnerId is { } ownerId
+                ? new DocumentOwner.Person(new OwnerId(ownerId))
+                : DocumentOwner.Me,
             Note,
-            Country.OfNullable(CountryCode),
-            OwnerId is { } ownerId ? new OwnerId(ownerId) : null);
+            Country.OfNullable(CountryCode));
     }
 }

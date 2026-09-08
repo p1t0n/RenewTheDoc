@@ -23,10 +23,9 @@ public partial class DocumentListPage : ContentPage
         await RefreshAsync();
     }
 
-    // Filter state (page-level, not persisted). _ownerFilterActive false = "All";
-    // when active, _ownerFilter null means "Me" (documents without an owner).
-    private bool _ownerFilterActive;
-    private OwnerId? _ownerFilter;
+    // Filter state (page-level, not persisted). No owner filter = "All"; Me and a Person are the
+    // other two chips, all three carried by the one value.
+    private DocumentOwner? _ownerFilter;
     private DocumentState? _statusFilter;
 
     private async Task RefreshAsync()
@@ -35,7 +34,7 @@ public partial class DocumentListPage : ContentPage
         var owners = await _owners.ListAsync();
         var ownerNames = owners.ToDictionary(o => o.Id, o => o.Name);
 
-        var groups = (await _documents.ListAsync(_ownerFilterActive, _ownerFilter, _statusFilter, today))
+        var groups = (await _documents.ListAsync(_ownerFilter, _statusFilter, today))
             .Select(g => new DocumentSection(
                 L.T(g.State switch
                 {
@@ -44,7 +43,9 @@ public partial class DocumentListPage : ContentPage
                     _ => "GroupAllGood",
                 }),
                 g.Documents.Select(d => DocumentListItem.From(d, today,
-                    !_ownerFilterActive && d.OwnerId is { } oid ? ownerNames.GetValueOrDefault(oid) : null))))
+                    _ownerFilter is null && d.Owner is DocumentOwner.Person person
+                        ? ownerNames.GetValueOrDefault(person.Id)
+                        : null))))
             .ToList();
 
         DocumentsView.ItemsSource = groups;
@@ -54,13 +55,14 @@ public partial class DocumentListPage : ContentPage
     private void BuildChips(IReadOnlyList<Owner> owners)
     {
         OwnerChips.Clear();
-        OwnerChips.Add(Chip(L.T("FilterAll"), !_ownerFilterActive, null,
-            () => { _ownerFilterActive = false; _ownerFilter = null; _ = RefreshAsync(); }));
-        OwnerChips.Add(Chip(L.T("OwnerMe"), _ownerFilterActive && _ownerFilter is null, null,
-            () => { _ownerFilterActive = true; _ownerFilter = null; _ = RefreshAsync(); }));
+        OwnerChips.Add(Chip(L.T("FilterAll"), _ownerFilter is null, null,
+            () => { _ownerFilter = null; _ = RefreshAsync(); }));
+        OwnerChips.Add(Chip(L.T("OwnerMe"), _ownerFilter == DocumentOwner.Me, null,
+            () => { _ownerFilter = DocumentOwner.Me; _ = RefreshAsync(); }));
         foreach (var owner in owners)
-            OwnerChips.Add(Chip(owner.Name, _ownerFilterActive && _ownerFilter == owner.Id, null,
-                () => { _ownerFilterActive = true; _ownerFilter = owner.Id; _ = RefreshAsync(); }));
+            OwnerChips.Add(Chip(owner.Name,
+                _ownerFilter is DocumentOwner.Person person && person.Id == owner.Id, null,
+                () => { _ownerFilter = new DocumentOwner.Person(owner.Id); _ = RefreshAsync(); }));
 
         StatusChips.Clear();
         StatusChips.Add(Chip(L.T("FilterAll"), _statusFilter is null, null,

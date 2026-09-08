@@ -10,6 +10,7 @@ public class DocumentTests
 {
     private static readonly DateOnly Expiry = new(2027, 1, 1);
     private static readonly RemindBefore Month = new(30);
+    private static readonly DocumentOwner Me = DocumentOwner.Me;
 
     private static DomainRule RuleFrom(Action act) =>
         Assert.Throws<DomainRuleViolationException>(act).Rule;
@@ -23,8 +24,8 @@ public class DocumentTests
     [Fact]
     public void Create_mints_a_new_identity()
     {
-        var one = Document.Create("Passport", Expiry, Month);
-        var two = Document.Create("Passport", Expiry, Month);
+        var one = Document.Create("Passport", Expiry, Month, Me);
+        var two = Document.Create("Passport", Expiry, Month, Me);
 
         Assert.NotEqual(default, one.Id);
         Assert.NotEqual(one.Id, two.Id);
@@ -35,7 +36,7 @@ public class DocumentTests
     {
         var id = DocumentId.New();
 
-        Assert.Equal(id, Document.Restore(id, "Passport", Expiry, Month).Id);
+        Assert.Equal(id, Document.Restore(id, "Passport", Expiry, Month, Me).Id);
     }
 
     // ---- enforced: name ----
@@ -45,13 +46,15 @@ public class DocumentTests
     [InlineData("   ")]
     public void A_name_that_is_empty_after_trimming_is_refused(string name)
     {
-        Assert.Equal(DomainRule.DocumentNameRequired, RuleFrom(() => Document.Create(name, Expiry, Month)));
         Assert.Equal(
             DomainRule.DocumentNameRequired,
-            RuleFrom(() => Document.Restore(DocumentId.New(), name, Expiry, Month)));
+            RuleFrom(() => Document.Create(name, Expiry, Month, Me)));
         Assert.Equal(
             DomainRule.DocumentNameRequired,
-            RuleFrom(() => Document.Create("Passport", Expiry, Month).Edit(name, Expiry, Month)));
+            RuleFrom(() => Document.Restore(DocumentId.New(), name, Expiry, Month, Me)));
+        Assert.Equal(
+            DomainRule.DocumentNameRequired,
+            RuleFrom(() => Document.Create("Passport", Expiry, Month, Me).Edit(name, Expiry, Month, Me)));
     }
 
     [Fact]
@@ -59,28 +62,31 @@ public class DocumentTests
     {
         var tooLong = new string('a', 201);
 
-        Assert.Equal(DomainRule.DocumentNameTooLong, RuleFrom(() => Document.Create(tooLong, Expiry, Month)));
         Assert.Equal(
             DomainRule.DocumentNameTooLong,
-            RuleFrom(() => Document.Restore(DocumentId.New(), tooLong, Expiry, Month)));
+            RuleFrom(() => Document.Create(tooLong, Expiry, Month, Me)));
         Assert.Equal(
             DomainRule.DocumentNameTooLong,
-            RuleFrom(() => Document.Create("Passport", Expiry, Month).Edit(tooLong, Expiry, Month)));
+            RuleFrom(() => Document.Restore(DocumentId.New(), tooLong, Expiry, Month, Me)));
+        Assert.Equal(
+            DomainRule.DocumentNameTooLong,
+            RuleFrom(() => Document.Create("Passport", Expiry, Month, Me).Edit(tooLong, Expiry, Month, Me)));
     }
 
     [Fact]
     public void Exactly_200_characters_is_still_a_name() =>
-        Assert.Equal(200, Document.Create(new string('a', 200), Expiry, Month).Name.Length);
+        Assert.Equal(200, Document.Create(new string('a', 200), Expiry, Month, Me).Name.Length);
 
     [Fact]
     public void The_name_is_stored_trimmed() =>
-        Assert.Equal("Passport", Document.Create("  Passport  ", Expiry, Month).Name);
+        Assert.Equal("Passport", Document.Create("  Passport  ", Expiry, Month, Me).Name);
 
     // ---- enforced: country ----
 
     [Fact]
     public void A_country_code_is_stored_uppercase() =>
-        Assert.Equal("PL", Document.Create("Passport", Expiry, Month, country: Country.Of("pl")).Country?.Code);
+        Assert.Equal("PL",
+            Document.Create("Passport", Expiry, Month, Me, country: Country.Of("pl")).Country?.Code);
 
     [Theory]
     [InlineData("")]
@@ -96,7 +102,7 @@ public class DocumentTests
     public void No_country_is_a_legal_country()
     {
         Assert.Null(Country.OfNullable(null));
-        Assert.Null(Document.Create("Passport", Expiry, Month).Country);
+        Assert.Null(Document.Create("Passport", Expiry, Month, Me).Country);
     }
 
     [Fact]
@@ -107,16 +113,18 @@ public class DocumentTests
 
     [Fact]
     public void A_country_code_outside_the_ISO_registry_is_accepted_shape_is_the_only_rule() =>
-        Assert.Equal("ZZ", Document.Create("Passport", Expiry, Month, country: Country.Of("zz")).Country?.Code);
+        Assert.Equal("ZZ",
+            Document.Create("Passport", Expiry, Month, Me, country: Country.Of("zz")).Country?.Code);
 
     [Fact]
     public void An_absurdly_early_remind_before_is_legal_intent() =>
-        Assert.Equal(10_000, Document.Create("Passport", Expiry, new RemindBefore(10_000)).RemindBefore.Days);
+        Assert.Equal(10_000,
+            Document.Create("Passport", Expiry, new RemindBefore(10_000), Me).RemindBefore.Days);
 
     [Fact]
     public void An_already_expired_expiry_date_is_legal()
     {
-        var document = Document.Create("Passport", new DateOnly(1999, 1, 1), Month);
+        var document = Document.Create("Passport", new DateOnly(1999, 1, 1), Month, Me);
 
         Assert.Equal(new DateOnly(1999, 1, 1), document.ExpiryDate);
         Assert.Equal(DocumentState.Expired, document.StateOn(new DateOnly(2026, 1, 1)));
@@ -126,31 +134,32 @@ public class DocumentTests
     public void A_remind_before_longer_than_the_time_to_expiry_is_legal() =>
         Assert.Equal(
             DocumentState.ExpiringSoon,
-            Document.Create("Passport", new DateOnly(2026, 1, 2), new RemindBefore(10_000))
+            Document.Create("Passport", new DateOnly(2026, 1, 2), new RemindBefore(10_000), Me)
                 .StateOn(new DateOnly(2026, 1, 1)));
 
     [Fact]
     public void An_owner_the_dictionary_does_not_know_is_still_a_valid_document()
     {
-        var stranger = OwnerId.New();
+        var stranger = new DocumentOwner.Person(OwnerId.New());
 
-        Assert.Equal(stranger, Document.Create("Passport", Expiry, Month, ownerId: stranger).OwnerId);
+        Assert.Equal(stranger, Document.Create("Passport", Expiry, Month, stranger).Owner);
     }
 
     [Fact]
     public void A_note_has_no_rules() =>
         Assert.Equal("  anything at all  ",
-            Document.Create("Passport", Expiry, Month, note: "  anything at all  ").Note);
+            Document.Create("Passport", Expiry, Month, Me, note: "  anything at all  ").Note);
 
     // ---- edit ----
 
     [Fact]
     public void Edit_returns_a_new_instance_under_the_same_identity()
     {
-        var original = Document.Create("Passport", Expiry, Month, note: "old", country: Country.Of("PL"));
+        var original = Document.Create("Passport", Expiry, Month, Me, "old", Country.Of("PL"));
+        var owner = new DocumentOwner.Person(OwnerId.New());
 
-        var edited = original.Edit("ID card", new DateOnly(2028, 5, 5), new RemindBefore(7), "new",
-            Country.Of("DE"), OwnerId.New());
+        var edited = original.Edit("ID card", new DateOnly(2028, 5, 5), new RemindBefore(7), owner,
+            "new", Country.Of("DE"));
 
         Assert.NotSame(original, edited);
         Assert.Equal(original.Id, edited.Id);
@@ -159,15 +168,15 @@ public class DocumentTests
         Assert.Equal(7, edited.RemindBefore.Days);
         Assert.Equal("new", edited.Note);
         Assert.Equal("DE", edited.Country?.Code);
-        Assert.NotNull(edited.OwnerId);
+        Assert.Equal(owner, edited.Owner);
     }
 
     [Fact]
     public void A_rejected_edit_leaves_the_original_untouched()
     {
-        var original = Document.Create("Passport", Expiry, Month, country: Country.Of("PL"));
+        var original = Document.Create("Passport", Expiry, Month, Me, country: Country.Of("PL"));
 
-        Assert.Throws<DomainRuleViolationException>(() => original.Edit("", Expiry, Month));
+        Assert.Throws<DomainRuleViolationException>(() => original.Edit("", Expiry, Month, Me));
 
         Assert.Equal("Passport", original.Name);
         Assert.Equal("PL", original.Country?.Code);
@@ -176,13 +185,13 @@ public class DocumentTests
     [Fact]
     public void Edit_clears_the_fields_it_is_not_given_there_is_no_partial_save()
     {
-        var original = Document.Create("Passport", Expiry, Month, note: "old", country: Country.Of("PL"),
-            ownerId: OwnerId.New());
+        var original = Document.Create("Passport", Expiry, Month,
+            new DocumentOwner.Person(OwnerId.New()), "old", Country.Of("PL"));
 
-        var edited = original.Edit("Passport", Expiry, Month);
+        var edited = original.Edit("Passport", Expiry, Month, Me);
 
         Assert.Null(edited.Note);
         Assert.Null(edited.Country);
-        Assert.Null(edited.OwnerId);
+        Assert.Same(DocumentOwner.Me, edited.Owner);
     }
 }

@@ -7,7 +7,7 @@ public class DocumentStateTests
     private static readonly DateOnly Today = new(2026, 8, 8);
 
     private static Document Doc(DateOnly expiry, int remindDays = 30) =>
-        Document.Create("Passport", expiry, new RemindBefore(remindDays));
+        Document.Create("Passport", expiry, new RemindBefore(remindDays), DocumentOwner.Me);
 
     [Fact]
     public void Expiry_in_the_past_is_expired() =>

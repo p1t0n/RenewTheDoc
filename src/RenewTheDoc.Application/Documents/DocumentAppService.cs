@@ -19,16 +19,16 @@ public sealed class DocumentAppService
     }
 
     /// <summary>
-    /// Documents grouped by state, expired first then by nearest expiry. When
-    /// <paramref name="ownerFilterActive"/> is false the owner filter is "All"; when it is true a
-    /// null <paramref name="ownerId"/> means "Me" (documents without an owner).
+    /// Documents grouped by state, expired first then by nearest expiry. The owner filter is a
+    /// single parameter: no <paramref name="ownerFilter"/> means every owner's documents, Me means
+    /// the user's own, and a Person means that one person's (spec §4).
     /// </summary>
     public async Task<IReadOnlyList<DocumentGroup>> ListAsync(
-        bool ownerFilterActive, OwnerId? ownerId, DocumentState? statusFilter, DateOnly today)
+        DocumentOwner? ownerFilter, DocumentState? statusFilter, DateOnly today)
     {
         var documents = (await _documents.GetAllAsync()).AsEnumerable();
-        if (ownerFilterActive)
-            documents = documents.Where(d => d.OwnerId == ownerId);
+        if (ownerFilter is { } owner)
+            documents = documents.Where(d => d.Owner == owner);
         if (statusFilter is { } state)
             documents = documents.Where(d => d.StateOn(today) == state);
 

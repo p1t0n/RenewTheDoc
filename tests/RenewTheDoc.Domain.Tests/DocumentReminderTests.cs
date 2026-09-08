@@ -7,7 +7,7 @@ public class DocumentReminderTests
     private static readonly DateTime Now = new(2026, 8, 8, 15, 0, 0); // 15:00 local
 
     private static Document Doc(DateOnly expiry, int remindDays = 30) =>
-        Document.Create("ID card", expiry, new RemindBefore(remindDays));
+        Document.Create("ID card", expiry, new RemindBefore(remindDays), DocumentOwner.Me);
 
     [Fact]
     public void Future_remind_moment_schedules_at_0900_local()
@@ -44,7 +44,8 @@ public class DocumentReminderTests
     {
         var doc = Doc(new DateOnly(2026, 12, 1));
 
-        var edited = doc.Edit("ID card", new DateOnly(2027, 12, 1), new RemindBefore(30));
+        var edited = doc.Edit("ID card", new DateOnly(2027, 12, 1), new RemindBefore(30),
+            DocumentOwner.Me);
 
         var at = Assert.IsType<ReminderInstruction.At>(edited.PlanReminder(Now));
         Assert.Equal(new DateTime(2027, 11, 1, 9, 0, 0), at.LocalTime);
