@@ -12,19 +12,21 @@ namespace RenewTheDoc.App.Services;
 /// </summary>
 public sealed class LocalNotificationReminderScheduler : IReminderScheduler
 {
-    public async Task ScheduleAsync(Document document)
+    public async Task ScheduleAsync(
+        DocumentId documentId, ReminderInstruction instruction, ReminderContent content)
     {
-        var plan = document.PlanReminder(DateTime.Now);
-        if (plan is ReminderInstruction.None) return;
+        // Executing a decided instruction, not deciding one: None means the aggregate already said
+        // there is nothing to alert about, so the platform is never touched.
+        if (instruction is ReminderInstruction.None) return;
 
         var request = new NotificationRequest
         {
-            NotificationId = ToNotificationId(document.Id),
+            NotificationId = ToNotificationId(documentId),
             Title = L.T("NotificationTitle"),
-            Description = L.F("NotificationText", document.Name, document.ExpiryDate.ToString("d")),
+            Description = L.F("NotificationText", content.DocumentName, content.ExpiryDate.ToString("d")),
         };
 
-        if (plan is ReminderInstruction.At at)
+        if (instruction is ReminderInstruction.At at)
         {
             request.Schedule = new NotificationRequestSchedule
             {
@@ -41,12 +43,11 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         return Task.CompletedTask;
     }
 
-    public async Task EnsurePermissionAsync()
+    public async Task<bool> EnsurePermissionAsync()
     {
-        if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
-        {
-            await LocalNotificationCenter.Current.RequestNotificationPermission();
-        }
+        if (await LocalNotificationCenter.Current.AreNotificationsEnabled()) return true;
+
+        return await LocalNotificationCenter.Current.RequestNotificationPermission();
     }
 
     // Unwraps to the Guid so the mapping stays bit-for-bit what it was before typed ids — a

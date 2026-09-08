@@ -37,17 +37,17 @@ public sealed class DocumentAppService
 
     // Add and edit write through the same upsert; what still distinguishes them is the reminder
     // orchestration, which is the app service's job (spec §5.1).
-    public async Task AddAsync(Document document)
+    public async Task AddAsync(Document document, DateTime nowLocal)
     {
         await _documents.SaveAsync(document);
-        await _scheduler.ScheduleAsync(document);
+        await ScheduleReminderAsync(document, nowLocal);
     }
 
-    public async Task EditAsync(Document document)
+    public async Task EditAsync(Document document, DateTime nowLocal)
     {
         await _documents.SaveAsync(document);
         await _scheduler.CancelAsync(document.Id); // edit = re-creation (CONTEXT.md)
-        await _scheduler.ScheduleAsync(document);
+        await ScheduleReminderAsync(document, nowLocal);
     }
 
     public async Task DeleteAsync(DocumentId documentId)
@@ -56,5 +56,14 @@ public sealed class DocumentAppService
         await _documents.RemoveAsync(documentId);
     }
 
-    public Task EnsureNotificationPermissionAsync() => _scheduler.EnsurePermissionAsync();
+    public Task<bool> EnsureNotificationPermissionAsync() => _scheduler.EnsurePermissionAsync();
+
+    /// <summary>
+    /// The seam the whole refactor exists for: the aggregate decides whether and when the Reminder
+    /// fires, and the scheduler is handed that decision plus the text inputs. Time arrives as an
+    /// argument, so neither the domain nor the adapter reads a clock (spec §4.1).
+    /// </summary>
+    private Task ScheduleReminderAsync(Document document, DateTime nowLocal) =>
+        _scheduler.ScheduleAsync(
+            document.Id, document.PlanReminder(nowLocal), ReminderContent.Of(document));
 }

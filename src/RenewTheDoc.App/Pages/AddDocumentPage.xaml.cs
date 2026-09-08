@@ -187,15 +187,20 @@ public partial class AddDocumentPage : ContentPage
             // is. Edit keeps the identity, so the reminder is cancelled and re-planned for the same
             // document rather than a new one.
             var country = Country.OfNullable(countryCode);
+            // The clock is read here, at the edge, and travels in as an argument — the adapter used
+            // to read it while deciding the reminder, which is exactly what stopped (spec §4.1).
+            var nowLocal = DateTime.Now;
             if (_editTarget is not { } editTarget)
             {
                 await _documents.AddAsync(
-                    Document.Create(name, expiryDate, remindBefore, _selectedOwner, note, country));
+                    Document.Create(name, expiryDate, remindBefore, _selectedOwner, note, country),
+                    nowLocal);
             }
             else
             {
                 await _documents.EditAsync(
-                    editTarget.Edit(name, expiryDate, remindBefore, _selectedOwner, note, country));
+                    editTarget.Edit(name, expiryDate, remindBefore, _selectedOwner, note, country),
+                    nowLocal);
             }
         }
         catch (DomainRuleViolationException violation)

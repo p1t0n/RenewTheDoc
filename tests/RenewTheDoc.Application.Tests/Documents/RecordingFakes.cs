@@ -102,19 +102,30 @@ public sealed class FakeOwnerRepository : IOwnerRepository
     }
 }
 
+/// <summary>
+/// Stands in for the whole notification platform. Everything the real adapter would need is now an
+/// argument, so the reminder rules are assertable with no MAUI and no device in sight (spec §4.1).
+/// </summary>
 public sealed class FakeReminderScheduler : IReminderScheduler
 {
     private readonly CallLog _log;
+    private readonly bool _permissionGranted;
 
-    public FakeReminderScheduler(CallLog log) => _log = log;
+    public FakeReminderScheduler(CallLog log, bool permissionGranted = true)
+    {
+        _log = log;
+        _permissionGranted = permissionGranted;
+    }
 
-    public List<Document> Scheduled { get; } = [];
+    public List<(DocumentId Id, ReminderInstruction Instruction, ReminderContent Content)> Scheduled { get; } = [];
     public List<DocumentId> Cancelled { get; } = [];
 
-    public Task ScheduleAsync(Document document)
+    public Task ScheduleAsync(
+        DocumentId documentId, ReminderInstruction instruction, ReminderContent content)
     {
-        _log.Record($"scheduler.Schedule({document.Name})");
-        Scheduled.Add(document);
+        // Logged by name, as before the port reshape, so the pinned call sequences read unchanged.
+        _log.Record($"scheduler.Schedule({content.DocumentName})");
+        Scheduled.Add((documentId, instruction, content));
         return Task.CompletedTask;
     }
 
@@ -125,9 +136,9 @@ public sealed class FakeReminderScheduler : IReminderScheduler
         return Task.CompletedTask;
     }
 
-    public Task EnsurePermissionAsync()
+    public Task<bool> EnsurePermissionAsync()
     {
         _log.Record("scheduler.EnsurePermission");
-        return Task.CompletedTask;
+        return Task.FromResult(_permissionGranted);
     }
 }
