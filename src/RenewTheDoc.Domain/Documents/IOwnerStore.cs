@@ -1,4 +1,4 @@
-namespace RenewTheDoc.Core;
+namespace RenewTheDoc.Domain.Documents;
 
 /// <summary>Local-only persistence for the Owner dictionary.</summary>
 public interface IOwnerStore

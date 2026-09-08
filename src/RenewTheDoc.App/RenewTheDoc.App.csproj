@@ -61,11 +61,12 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 		<PackageReference Include="Plugin.LocalNotification" Version="14.1.1" />
-		<PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\RenewTheDoc.Core\RenewTheDoc.Core.csproj" />
+		<ProjectReference Include="..\RenewTheDoc.Domain\RenewTheDoc.Domain.csproj" />
+		<ProjectReference Include="..\RenewTheDoc.Application\RenewTheDoc.Application.csproj" />
+		<ProjectReference Include="..\RenewTheDoc.Persistence\RenewTheDoc.Persistence.csproj" />
 	</ItemGroup>
 
 </Project>

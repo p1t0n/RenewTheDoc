@@ -2,7 +2,8 @@ using Microsoft.Extensions.Logging;
 using Plugin.LocalNotification;
 using RenewTheDoc.App.Pages;
 using RenewTheDoc.App.Services;
-using RenewTheDoc.Core;
+using RenewTheDoc.Domain.Documents;
+using RenewTheDoc.Persistence.Documents;
 
 namespace RenewTheDoc.App;
 

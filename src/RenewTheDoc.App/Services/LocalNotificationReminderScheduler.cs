@@ -1,7 +1,7 @@
 using Plugin.LocalNotification;
 using Plugin.LocalNotification.Core.Models;
 using RenewTheDoc.App.Localization;
-using RenewTheDoc.Core;
+using RenewTheDoc.Domain.Documents;
 
 namespace RenewTheDoc.App.Services;
 

@@ -31,9 +31,11 @@ Core feature set working on Android and iOS (verified on emulator and simulators
 
 .NET MAUI on .NET 10. Solution layout:
 
-- `src/RenewTheDoc.Core` — domain model (see [CONTEXT.md](CONTEXT.md)), no MAUI dependency
-- `src/RenewTheDoc.App` — MAUI app (Android + iOS); notifications via Plugin.LocalNotification behind `IReminderScheduler`, storage via sqlite-net behind `IDocumentStore`/`IOwnerStore`
-- `tests/RenewTheDoc.Core.Tests` — domain rules tests
+- `src/RenewTheDoc.Domain` — domain model (see [CONTEXT.md](CONTEXT.md)), no MAUI dependency
+- `src/RenewTheDoc.Application` — application services over the domain
+- `src/RenewTheDoc.Persistence` — sqlite-net storage behind `IDocumentStore`/`IOwnerStore`
+- `src/RenewTheDoc.App` — MAUI app (Android + iOS); notifications via Plugin.LocalNotification behind `IReminderScheduler`
+- `tests/RenewTheDoc.Domain.Tests`, `tests/RenewTheDoc.Application.Tests`, `tests/RenewTheDoc.Persistence.Tests` — mirror the source projects
 
 ## Building locally
 

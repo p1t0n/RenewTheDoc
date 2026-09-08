@@ -1,4 +1,4 @@
-namespace RenewTheDoc.Core;
+namespace RenewTheDoc.Domain.Documents;
 
 /// <summary>A thing the user wants to renew before it stops being valid. See CONTEXT.md.</summary>
 public sealed record Document

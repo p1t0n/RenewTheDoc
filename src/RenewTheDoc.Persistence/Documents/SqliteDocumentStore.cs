@@ -1,7 +1,7 @@
-using RenewTheDoc.Core;
+using RenewTheDoc.Domain.Documents;
 using SQLite;
 
-namespace RenewTheDoc.App.Services;
+namespace RenewTheDoc.Persistence.Documents;
 
 public sealed class SqliteDocumentStore : IDocumentStore, IOwnerStore
 {
