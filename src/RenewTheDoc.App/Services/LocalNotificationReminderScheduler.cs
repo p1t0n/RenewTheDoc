@@ -14,7 +14,7 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
 {
     public async Task ScheduleAsync(Document document, CancellationToken ct = default)
     {
-        var plan = ReminderPlanner.Plan(document, DateTime.Now);
+        var plan = document.PlanReminder(DateTime.Now);
         if (plan is ReminderInstruction.None) return;
 
         var request = new NotificationRequest

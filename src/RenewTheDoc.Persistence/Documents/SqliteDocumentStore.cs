@@ -84,19 +84,19 @@ public sealed class SqliteDocumentStore : IDocumentStore, IOwnerStore
             ExpiryDate = d.ExpiryDate.ToString("O"),
             RemindBeforeDays = d.RemindBefore.Days,
             Note = d.Note,
-            CountryCode = d.CountryCode,
+            CountryCode = d.Country?.Code,
             OwnerId = d.OwnerId?.Value,
         };
 
-        public Document ToDocument() => new()
-        {
-            Id = new DocumentId(Id),
-            Name = Name,
-            ExpiryDate = DateOnly.Parse(ExpiryDate),
-            RemindBefore = new RemindBefore(RemindBeforeDays),
-            Note = Note,
-            CountryCode = CountryCode,
-            OwnerId = OwnerId is { } ownerId ? new OwnerId(ownerId) : null,
-        };
+        // Restore, not a constructor: a row that breaks an invariant must fail loud rather than
+        // become an invalid aggregate (spec §5.2).
+        public Document ToDocument() => Document.Restore(
+            new DocumentId(Id),
+            Name,
+            DateOnly.Parse(ExpiryDate),
+            new RemindBefore(RemindBeforeDays),
+            Note,
+            Country.OfNullable(CountryCode),
+            OwnerId is { } ownerId ? new OwnerId(ownerId) : null);
     }
 }

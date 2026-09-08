@@ -118,7 +118,7 @@ public partial class AddDocumentPage : ContentPage
             CustomDaysEntry.Text = doc.RemindBefore.Days.ToString();
         }
 
-        var countryIndex = _countries.ToList().FindIndex(c => c.Code == doc.CountryCode);
+        var countryIndex = _countries.ToList().FindIndex(c => c.Code == doc.Country?.Code);
         CountryPicker.SelectedIndex = countryIndex >= 0 ? countryIndex + 1 : 0;
 
         _ = LoadOwnersAsync(doc.OwnerId);
@@ -157,26 +157,27 @@ public partial class AddDocumentPage : ContentPage
             return;
         }
 
+        var expiryDate = DateOnly.FromDateTime(ExpiryPicker.Date ?? DateTime.Now.Date);
+        var note = string.IsNullOrWhiteSpace(NoteEntry.Text) ? null : NoteEntry.Text.Trim();
+        var countryCode = CountryPicker.SelectedIndex > 0
+            ? _countries[CountryPicker.SelectedIndex - 1].Code
+            : null;
+
         try
         {
-            var document = new Document
+            // The aggregate decides what a valid Document is; the page only says which use case it
+            // is. Edit keeps the identity, so the reminder is cancelled and re-planned for the same
+            // document rather than a new one.
+            var country = Country.OfNullable(countryCode);
+            if (_editTarget is not { } editTarget)
             {
-                Id = _editTarget?.Id ?? DocumentId.New(),
-                Name = name,
-                ExpiryDate = DateOnly.FromDateTime(ExpiryPicker.Date ?? DateTime.Now.Date),
-                RemindBefore = remindBefore,
-                Note = string.IsNullOrWhiteSpace(NoteEntry.Text) ? null : NoteEntry.Text.Trim(),
-                CountryCode = CountryPicker.SelectedIndex > 0 ? _countries[CountryPicker.SelectedIndex - 1].Code : null,
-                OwnerId = _selectedOwnerId,
-            };
-
-            if (_editTarget is null)
-            {
-                await _documents.AddAsync(document);
+                await _documents.AddAsync(
+                    Document.Create(name, expiryDate, remindBefore, note, country, _selectedOwnerId));
             }
             else
             {
-                await _documents.EditAsync(document);
+                await _documents.EditAsync(
+                    editTarget.Edit(name, expiryDate, remindBefore, note, country, _selectedOwnerId));
             }
         }
         catch (DomainRuleViolationException violation)
