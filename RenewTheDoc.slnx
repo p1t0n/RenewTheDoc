@@ -1,9 +1,13 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/RenewTheDoc.App/RenewTheDoc.App.csproj" />
-    <Project Path="src/RenewTheDoc.Core/RenewTheDoc.Core.csproj" />
+    <Project Path="src/RenewTheDoc.Application/RenewTheDoc.Application.csproj" />
+    <Project Path="src/RenewTheDoc.Domain/RenewTheDoc.Domain.csproj" />
+    <Project Path="src/RenewTheDoc.Persistence/RenewTheDoc.Persistence.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/RenewTheDoc.Core.Tests/RenewTheDoc.Core.Tests.csproj" />
+    <Project Path="tests/RenewTheDoc.Application.Tests/RenewTheDoc.Application.Tests.csproj" />
+    <Project Path="tests/RenewTheDoc.Domain.Tests/RenewTheDoc.Domain.Tests.csproj" />
+    <Project Path="tests/RenewTheDoc.Persistence.Tests/RenewTheDoc.Persistence.Tests.csproj" />
   </Folder>
 </Solution>

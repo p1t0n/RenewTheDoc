@@ -1,4 +1,4 @@
-namespace RenewTheDoc.Core;
+namespace RenewTheDoc.Domain.Documents;
 
 /// <summary>
 /// Platform notification scheduling seam. Implementations wrap Plugin.LocalNotification (or raw

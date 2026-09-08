@@ -1,6 +1,6 @@
 using System.Globalization;
 using RenewTheDoc.App.Localization;
-using RenewTheDoc.Core;
+using RenewTheDoc.Domain.Documents;
 
 namespace RenewTheDoc.App.Pages;
 

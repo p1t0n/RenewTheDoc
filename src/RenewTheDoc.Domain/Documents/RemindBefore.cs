@@ -1,4 +1,4 @@
-namespace RenewTheDoc.Core;
+namespace RenewTheDoc.Domain.Documents;
 
 /// <summary>
 /// Per-document lead time before the expiry date. Doubles as the Expiring Soon window.

@@ -1,4 +1,4 @@
-namespace RenewTheDoc.Core;
+namespace RenewTheDoc.Domain.Documents;
 
 /// <summary>What the scheduler should do for a document's single Reminder.</summary>
 public abstract record ReminderInstruction

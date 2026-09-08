@@ -1,4 +1,4 @@
-namespace RenewTheDoc.Core;
+namespace RenewTheDoc.Domain.Documents;
 
 /// <summary>Local-only persistence seam. No backend exists — see the map's privacy stance.</summary>
 public interface IDocumentStore

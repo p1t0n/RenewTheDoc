@@ -1,6 +1,6 @@
-using RenewTheDoc.Core;
+using RenewTheDoc.Domain.Documents;
 
-namespace RenewTheDoc.Core.Tests;
+namespace RenewTheDoc.Domain.Tests;
 
 public class DocumentStateTests
 {
