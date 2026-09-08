@@ -26,6 +26,10 @@
   <data name="NotificationText" xml:space="preserve"><value>{0} expires on {1}</value></data>
   <data name="NameRequired" xml:space="preserve"><value>Name is required</value></data>
   <data name="InvalidCustomDays" xml:space="preserve"><value>Enter a valid number of days</value></data>
+  <data name="DocumentNameTooLong" xml:space="preserve"><value>Name is too long</value></data>
+  <data name="CountryCodeInvalid" xml:space="preserve"><value>Select a valid country</value></data>
+  <data name="OwnerNameRequired" xml:space="preserve"><value>Owner name is required</value></data>
+  <data name="OwnerNameTooLong" xml:space="preserve"><value>Owner name is too long</value></data>
   <data name="ValidationTitle" xml:space="preserve"><value>Check the form</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="GroupNeedsAttention" xml:space="preserve"><value>Needs attention</value></data>

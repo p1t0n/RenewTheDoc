@@ -10,7 +10,7 @@ public readonly record struct RemindBefore
 
     public RemindBefore(int days)
     {
-        if (days < 0) throw new ArgumentOutOfRangeException(nameof(days), "Remind-before cannot be negative.");
+        if (days < 0) throw new DomainRuleViolationException(DomainRule.RemindBeforeNegative);
         Days = days;
     }
 

@@ -1,6 +1,7 @@
 using System.Globalization;
 using RenewTheDoc.App.Localization;
 using RenewTheDoc.Application.Documents;
+using RenewTheDoc.Domain;
 using RenewTheDoc.Domain.Documents;
 
 namespace RenewTheDoc.App.Pages;
@@ -156,24 +157,35 @@ public partial class AddDocumentPage : ContentPage
             return;
         }
 
-        var document = new Document
+        try
         {
-            Id = _editTarget?.Id ?? DocumentId.New(),
-            Name = name,
-            ExpiryDate = DateOnly.FromDateTime(ExpiryPicker.Date ?? DateTime.Now.Date),
-            RemindBefore = remindBefore,
-            Note = string.IsNullOrWhiteSpace(NoteEntry.Text) ? null : NoteEntry.Text.Trim(),
-            CountryCode = CountryPicker.SelectedIndex > 0 ? _countries[CountryPicker.SelectedIndex - 1].Code : null,
-            OwnerId = _selectedOwnerId,
-        };
+            var document = new Document
+            {
+                Id = _editTarget?.Id ?? DocumentId.New(),
+                Name = name,
+                ExpiryDate = DateOnly.FromDateTime(ExpiryPicker.Date ?? DateTime.Now.Date),
+                RemindBefore = remindBefore,
+                Note = string.IsNullOrWhiteSpace(NoteEntry.Text) ? null : NoteEntry.Text.Trim(),
+                CountryCode = CountryPicker.SelectedIndex > 0 ? _countries[CountryPicker.SelectedIndex - 1].Code : null,
+                OwnerId = _selectedOwnerId,
+            };
 
-        if (_editTarget is null)
-        {
-            await _documents.AddAsync(document);
+            if (_editTarget is null)
+            {
+                await _documents.AddAsync(document);
+            }
+            else
+            {
+                await _documents.EditAsync(document);
+            }
         }
-        else
+        catch (DomainRuleViolationException violation)
         {
-            await _documents.EditAsync(document);
+            // A broken invariant is a form problem — shown with the same alert, in the user's
+            // language, via the code → resource-key mapping.
+            await DisplayAlertAsync(
+                L.T("ValidationTitle"), DomainRuleMessages.Localized(violation.Rule), L.T("Ok"));
+            return;
         }
         await Shell.Current.GoToAsync("..");
     }

@@ -26,6 +26,10 @@
   <data name="NotificationText" xml:space="preserve"><value>{0} traci ważność {1}</value></data>
   <data name="NameRequired" xml:space="preserve"><value>Nazwa jest wymagana</value></data>
   <data name="InvalidCustomDays" xml:space="preserve"><value>Podaj poprawną liczbę dni</value></data>
+  <data name="DocumentNameTooLong" xml:space="preserve"><value>Nazwa jest za długa</value></data>
+  <data name="CountryCodeInvalid" xml:space="preserve"><value>Wybierz poprawny kraj</value></data>
+  <data name="OwnerNameRequired" xml:space="preserve"><value>Imię właściciela jest wymagane</value></data>
+  <data name="OwnerNameTooLong" xml:space="preserve"><value>Imię właściciela jest za długie</value></data>
   <data name="ValidationTitle" xml:space="preserve"><value>Sprawdź formularz</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="GroupNeedsAttention" xml:space="preserve"><value>Wymaga uwagi</value></data>

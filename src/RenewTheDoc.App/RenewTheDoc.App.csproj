@@ -11,6 +11,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
+		<!-- A switch expression that misses a named enum value is an error, not a warning: the
+		     DomainRule → resource-key mapping must stay exhaustive (spec §7.3). -->
+		<WarningsAsErrors>$(WarningsAsErrors);CS8509</WarningsAsErrors>
+
 		<!-- Enable XAML source generation for faster build times and improved performance.
 		     This generates C# code from XAML at compile time instead of runtime inflation.
 		     To disable, remove this line.
