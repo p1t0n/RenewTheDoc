@@ -36,7 +36,7 @@ public partial class DocumentListPage : ContentPage
         var ownerNames = owners.ToDictionary(o => o.Id, o => o.Name);
 
         var groups = (await _documents.ListAsync(_ownerFilterActive, _ownerFilter, _statusFilter, today))
-            .Select(g => new DocumentGroup(
+            .Select(g => new DocumentSection(
                 L.T(g.State switch
                 {
                     DocumentState.Expired => "GroupNeedsAttention",
@@ -150,17 +150,21 @@ public partial class DocumentListPage : ContentPage
     }
 }
 
-public sealed class DocumentGroup : List<DocumentListItem>
+/// <summary>
+/// A domain <see cref="DocumentGroup"/> dressed for the CollectionView: a localized heading over
+/// display rows. Named apart from the domain type so the two never read as one.
+/// </summary>
+public sealed class DocumentSection : List<DocumentListItem>
 {
     public string Title { get; }
-    public DocumentGroup(string title, IEnumerable<DocumentListItem> items) : base(items) => Title = title;
+    public DocumentSection(string title, IEnumerable<DocumentListItem> items) : base(items) => Title = title;
 }
 
 public sealed record DocumentListItem(Document Source, string Name, string DateText, string NumberText, string UnitText, Color StateColor)
 {
     public static DocumentListItem From(Document d, DateOnly today, string? ownerName = null)
     {
-        var state = d.GetState(today);
+        var state = d.StateOn(today);
         var days = d.ExpiryDate.DayNumber - today.DayNumber;
 
         var (number, unit) = state == DocumentState.Expired
@@ -172,7 +176,7 @@ public sealed record DocumentListItem(Document Source, string Name, string DateT
         var dateText = state == DocumentState.Expired
             ? L.F("ExpiredOn", d.ExpiryDate.ToString("d"))
             : L.F("ExpiresOn", d.ExpiryDate.ToString("d"));
-        if (d.CountryCode is { } cc) dateText += $" · {cc}";
+        if (d.Country is { } country) dateText += $" · {country.Code}";
         if (ownerName is not null) dateText = $"{ownerName} · {dateText}";
 
         var color = Microsoft.Maui.Controls.Application.Current!.RequestedTheme == AppTheme.Dark

@@ -23,20 +23,16 @@ public sealed class DocumentAppService
     /// <paramref name="ownerFilterActive"/> is false the owner filter is "All"; when it is true a
     /// null <paramref name="ownerId"/> means "Me" (documents without an owner).
     /// </summary>
-    public async Task<IReadOnlyList<DocumentStateGroup>> ListAsync(
+    public async Task<IReadOnlyList<DocumentGroup>> ListAsync(
         bool ownerFilterActive, OwnerId? ownerId, DocumentState? statusFilter, DateOnly today)
     {
-        var documents = DocumentListOrder.Sorted(await _documents.GetAllAsync(), today).AsEnumerable();
+        var documents = (await _documents.GetAllAsync()).AsEnumerable();
         if (ownerFilterActive)
             documents = documents.Where(d => d.OwnerId == ownerId);
         if (statusFilter is { } state)
-            documents = documents.Where(d => d.GetState(today) == state);
+            documents = documents.Where(d => d.StateOn(today) == state);
 
-        return documents
-            .GroupBy(d => d.GetState(today))
-            .OrderBy(g => g.Key)
-            .Select(g => new DocumentStateGroup(g.Key, g.ToList()))
-            .ToList();
+        return DocumentList.Grouped(documents, today);
     }
 
     public async Task AddAsync(Document document)

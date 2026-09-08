@@ -13,14 +13,9 @@ public class DocumentAppServiceTests
 
     private static Document Doc(string name, DateOnly expiry, int remindDays = 30,
         DocumentId? id = null, OwnerId? ownerId = null) =>
-        new()
-        {
-            Id = id ?? DocumentId.New(),
-            Name = name,
-            ExpiryDate = expiry,
-            RemindBefore = new RemindBefore(remindDays),
-            OwnerId = ownerId,
-        };
+        id is { } stored
+            ? Document.Restore(stored, name, expiry, new RemindBefore(remindDays), ownerId: ownerId)
+            : Document.Create(name, expiry, new RemindBefore(remindDays), ownerId: ownerId);
 
     [Fact]
     public async Task Add_saves_then_schedules()

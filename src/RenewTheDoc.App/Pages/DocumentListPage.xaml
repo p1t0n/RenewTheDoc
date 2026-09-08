@@ -28,7 +28,7 @@
                        HorizontalOptions="Center" VerticalOptions="Center" Margin="24" />
             </CollectionView.EmptyView>
             <CollectionView.GroupHeaderTemplate>
-                <DataTemplate x:DataType="pages:DocumentGroup">
+                <DataTemplate x:DataType="pages:DocumentSection">
                     <Label Text="{Binding Title}" Style="{StaticResource GroupHeader}" />
                 </DataTemplate>
             </CollectionView.GroupHeaderTemplate>
