@@ -7,7 +7,7 @@ public class DocumentListTests
     private static readonly DateOnly Today = new(2026, 8, 8);
 
     private static Document Doc(string name, DateOnly expiry, int remindDays = 30) =>
-        Document.Create(name, expiry, new RemindBefore(remindDays));
+        Document.Create(name, expiry, new RemindBefore(remindDays), DocumentOwner.Me);
 
     [Fact]
     public void Groups_run_in_glossary_order_expired_first()

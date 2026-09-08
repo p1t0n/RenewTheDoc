@@ -11,10 +11,13 @@ public sealed class OwnerAppService
 
     public Task<IReadOnlyList<Owner>> ListAsync() => _owners.GetAllAsync();
 
-    /// <summary>Adds an Owner to the dictionary and returns it, so the caller can select it.</summary>
+    /// <summary>
+    /// Adds an Owner to the dictionary and returns it, so the caller can select it. A name already
+    /// in the dictionary is accepted: two people may share one (spec §3.3).
+    /// </summary>
     public async Task<Owner> AddAsync(string name)
     {
-        var owner = new Owner { Name = name };
+        var owner = Owner.Create(name);
         await _owners.AddAsync(owner);
         return owner;
     }

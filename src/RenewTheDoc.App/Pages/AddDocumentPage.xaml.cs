@@ -14,7 +14,7 @@ public partial class AddDocumentPage : ContentPage
     private readonly List<Button> _segments = [];
     private readonly IReadOnlyList<(string Code, string Name)> _countries;
     private List<Owner> _ownerList = [];
-    private OwnerId? _selectedOwnerId;
+    private DocumentOwner _selectedOwner = DocumentOwner.Me;
     private int _selectedSegment = 1; // default: 1 month
     private Document? _editTarget;
 
@@ -59,20 +59,25 @@ public partial class AddDocumentPage : ContentPage
         CountryPicker.SelectedIndex = 0;
 
         ExpiryPicker.Date = DateTime.Now.Date.AddMonths(6);
-        _ = LoadOwnersAsync(null);
+        _ = LoadOwnersAsync(DocumentOwner.Me);
     }
 
-    /// <summary>Rebuilds the owner picker: Me · dictionary owners · "+ New owner…".</summary>
-    private async Task LoadOwnersAsync(OwnerId? select)
+    /// <summary>
+    /// Rebuilds the owner picker: Me · dictionary owners · "+ New owner…". A person the dictionary
+    /// no longer knows falls back to Me, as it always has.
+    /// </summary>
+    private async Task LoadOwnersAsync(DocumentOwner select)
     {
         _ownerList = (await _owners.ListAsync()).ToList();
         OwnerPicker.ItemsSource = new[] { L.T("OwnerMe") }
             .Concat(_ownerList.Select(o => o.Name))
             .Concat([L.T("OwnerNew")])
             .ToList();
-        var index = select is { } id ? _ownerList.FindIndex(o => o.Id == id) : -1;
+        var index = select is DocumentOwner.Person person
+            ? _ownerList.FindIndex(o => o.Id == person.Id)
+            : -1;
         OwnerPicker.SelectedIndex = index >= 0 ? index + 1 : 0;
-        _selectedOwnerId = index >= 0 ? select : null;
+        _selectedOwner = index >= 0 ? select : DocumentOwner.Me;
     }
 
     private async void OnOwnerChanged(object? sender, EventArgs e)
@@ -89,12 +94,25 @@ public partial class AddDocumentPage : ContentPage
                 OwnerPicker.SelectedIndex = 0;
                 return;
             }
-            var owner = await _owners.AddAsync(name);
-            await LoadOwnersAsync(owner.Id);
+            try
+            {
+                var owner = await _owners.AddAsync(name);
+                await LoadOwnersAsync(new DocumentOwner.Person(owner.Id));
+            }
+            catch (DomainRuleViolationException violation)
+            {
+                // Owner now enforces its own name rules, so the prompt answers to the same
+                // localized alert the save path uses, and the picker falls back to Me.
+                await DisplayAlertAsync(
+                    L.T("ValidationTitle"), DomainRuleMessages.Localized(violation.Rule), L.T("Ok"));
+                OwnerPicker.SelectedIndex = 0;
+            }
             return;
         }
 
-        _selectedOwnerId = i == 0 ? null : _ownerList[i - 1].Id;
+        _selectedOwner = i == 0
+            ? DocumentOwner.Me
+            : new DocumentOwner.Person(_ownerList[i - 1].Id);
     }
 
     private void ApplyEditTarget()
@@ -121,7 +139,7 @@ public partial class AddDocumentPage : ContentPage
         var countryIndex = _countries.ToList().FindIndex(c => c.Code == doc.Country?.Code);
         CountryPicker.SelectedIndex = countryIndex >= 0 ? countryIndex + 1 : 0;
 
-        _ = LoadOwnersAsync(doc.OwnerId);
+        _ = LoadOwnersAsync(doc.Owner);
     }
 
     private void SelectSegment(int index)
@@ -172,12 +190,12 @@ public partial class AddDocumentPage : ContentPage
             if (_editTarget is not { } editTarget)
             {
                 await _documents.AddAsync(
-                    Document.Create(name, expiryDate, remindBefore, note, country, _selectedOwnerId));
+                    Document.Create(name, expiryDate, remindBefore, _selectedOwner, note, country));
             }
             else
             {
                 await _documents.EditAsync(
-                    editTarget.Edit(name, expiryDate, remindBefore, note, country, _selectedOwnerId));
+                    editTarget.Edit(name, expiryDate, remindBefore, _selectedOwner, note, country));
             }
         }
         catch (DomainRuleViolationException violation)
