@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Domain and application tests
+    name: Domain, application and persistence tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +17,8 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet test tests/RenewTheDoc.Domain.Tests --nologo
       - run: dotnet test tests/RenewTheDoc.Application.Tests --nologo
+      # Real SQLite, and the schema guard: a test nobody runs is not a guard.
+      - run: dotnet test tests/RenewTheDoc.Persistence.Tests --nologo
 
   android:
     name: Android build
