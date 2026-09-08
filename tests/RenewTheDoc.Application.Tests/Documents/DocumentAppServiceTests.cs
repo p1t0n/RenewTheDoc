@@ -10,6 +10,7 @@ namespace RenewTheDoc.Application.Tests.Documents;
 public class DocumentAppServiceTests
 {
     private static readonly DateOnly Today = new(2026, 1, 1);
+    private static readonly DateTime NowLocal = new(2026, 1, 1, 8, 0, 0);
 
     private static Document Doc(string name, DateOnly expiry, int remindDays = 30,
         DocumentId? id = null, DocumentOwner? owner = null)
@@ -29,11 +30,13 @@ public class DocumentAppServiceTests
         var service = new DocumentAppService(repository, scheduler);
         var document = Doc("Passport", new DateOnly(2026, 6, 1));
 
-        await service.AddAsync(document);
+        await service.AddAsync(document, NowLocal);
 
         Assert.Equal(["documents.Save(Passport)", "scheduler.Schedule(Passport)"], log.Calls);
         Assert.Same(document, Assert.Single(repository.Saved));
-        Assert.Same(document, Assert.Single(scheduler.Scheduled));
+        var scheduled = Assert.Single(scheduler.Scheduled);
+        Assert.Equal(document.Id, scheduled.Id);
+        Assert.Equal(new ReminderContent("Passport", new DateOnly(2026, 6, 1)), scheduled.Content);
         Assert.Empty(scheduler.Cancelled);
     }
 
@@ -52,15 +55,89 @@ public class DocumentAppServiceTests
         var service = new DocumentAppService(repository, scheduler);
         var document = Doc("Passport", new DateOnly(2026, 6, 1), id: id);
 
-        await service.EditAsync(document);
+        await service.EditAsync(document, NowLocal);
 
         Assert.Equal(
             ["documents.Save(Passport)", $"scheduler.Cancel({id})", "scheduler.Schedule(Passport)"],
             log.Calls);
         Assert.Same(document, Assert.Single(repository.Saved));
         Assert.Equal(id, Assert.Single(scheduler.Cancelled));
-        Assert.Same(document, Assert.Single(scheduler.Scheduled));
+        Assert.Equal(id, Assert.Single(scheduler.Scheduled).Id);
         Assert.Empty(repository.Removed);
+    }
+
+    /// <summary>
+    /// CONTEXT.md's "editing behaves like re-creation" rule, now assertable with a fake scheduler
+    /// and no platform present: the same identity is cancelled and then re-planned from the edited
+    /// state, so the new expiry — not the old one — decides the moment.
+    /// </summary>
+    [Fact]
+    public async Task Edit_cancels_the_old_reminder_and_re_plans_from_the_edited_state()
+    {
+        var log = new CallLog();
+        var scheduler = new FakeReminderScheduler(log);
+        var service = new DocumentAppService(new FakeDocumentRepository(log), scheduler);
+        var stored = Doc("Passport", new DateOnly(2026, 6, 1), remindDays: 30, id: DocumentId.New());
+
+        var edited = stored.Edit(
+            "Passport", new DateOnly(2026, 3, 1), new RemindBefore(7), DocumentOwner.Me);
+        await service.EditAsync(edited, NowLocal);
+
+        Assert.Equal(stored.Id, Assert.Single(scheduler.Cancelled));
+        var scheduled = Assert.Single(scheduler.Scheduled);
+        Assert.Equal(stored.Id, scheduled.Id);
+        Assert.Equal(
+            new ReminderInstruction.At(new DateTime(2026, 2, 22, 9, 0, 0)), scheduled.Instruction);
+        Assert.Equal(new ReminderContent("Passport", new DateOnly(2026, 3, 1)), scheduled.Content);
+    }
+
+    /// <summary>
+    /// The instruction crossing the port is the aggregate's, decided against the time the caller
+    /// passed in — the adapter reads no clock and plans nothing (spec §4.1).
+    /// </summary>
+    [Fact]
+    public async Task Add_hands_the_scheduler_the_instruction_the_aggregate_planned()
+    {
+        var log = new CallLog();
+        var scheduler = new FakeReminderScheduler(log);
+        var service = new DocumentAppService(new FakeDocumentRepository(log), scheduler);
+        var document = Doc("Passport", new DateOnly(2026, 6, 1), remindDays: 30);
+
+        await service.AddAsync(document, NowLocal);
+
+        Assert.Equal(
+            document.PlanReminder(NowLocal), Assert.Single(scheduler.Scheduled).Instruction);
+    }
+
+    /// <summary>An already-past reminder moment still fires once, immediately, as it always has.</summary>
+    [Fact]
+    public async Task Add_of_a_document_whose_reminder_moment_has_passed_fires_immediately()
+    {
+        var log = new CallLog();
+        var scheduler = new FakeReminderScheduler(log);
+        var service = new DocumentAppService(new FakeDocumentRepository(log), scheduler);
+        var document = Doc("Passport", new DateOnly(2026, 1, 10), remindDays: 30);
+
+        await service.AddAsync(document, NowLocal);
+
+        Assert.Equal(new ReminderInstruction.Immediate(), Assert.Single(scheduler.Scheduled).Instruction);
+    }
+
+    /// <summary>
+    /// An expired document gets <c>None</c>. The port is still called — the instruction is the
+    /// decision, and skipping the call would put that decision back in the app service.
+    /// </summary>
+    [Fact]
+    public async Task Add_of_an_expired_document_schedules_nothing()
+    {
+        var log = new CallLog();
+        var scheduler = new FakeReminderScheduler(log);
+        var service = new DocumentAppService(new FakeDocumentRepository(log), scheduler);
+        var document = Doc("Passport", new DateOnly(2025, 12, 1));
+
+        await service.AddAsync(document, NowLocal);
+
+        Assert.Equal(new ReminderInstruction.None(), Assert.Single(scheduler.Scheduled).Instruction);
     }
 
     [Fact]
@@ -88,9 +165,24 @@ public class DocumentAppServiceTests
         var scheduler = new FakeReminderScheduler(log);
         var service = new DocumentAppService(repository, scheduler);
 
-        await service.EnsureNotificationPermissionAsync();
+        var granted = await service.EnsureNotificationPermissionAsync();
 
         Assert.Equal(["scheduler.EnsurePermission"], log.Calls);
+        Assert.True(granted);
+    }
+
+    /// <summary>
+    /// Permission is a port member now, so a refusal is an answer the caller can see rather than
+    /// something only the concrete adapter knows.
+    /// </summary>
+    [Fact]
+    public async Task Ensure_permission_reports_a_refusal()
+    {
+        var log = new CallLog();
+        var service = new DocumentAppService(
+            new FakeDocumentRepository(log), new FakeReminderScheduler(log, permissionGranted: false));
+
+        Assert.False(await service.EnsureNotificationPermissionAsync());
     }
 
     [Fact]
