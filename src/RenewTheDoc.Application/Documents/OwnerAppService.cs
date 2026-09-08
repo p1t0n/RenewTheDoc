@@ -5,9 +5,9 @@ namespace RenewTheDoc.Application.Documents;
 /// <summary>Use cases over the Owner dictionary: list and add.</summary>
 public sealed class OwnerAppService
 {
-    private readonly IOwnerStore _owners;
+    private readonly IOwnerRepository _owners;
 
-    public OwnerAppService(IOwnerStore owners) => _owners = owners;
+    public OwnerAppService(IOwnerRepository owners) => _owners = owners;
 
     public Task<IReadOnlyList<Owner>> ListAsync() => _owners.GetAllAsync();
 
@@ -18,7 +18,7 @@ public sealed class OwnerAppService
     public async Task<Owner> AddAsync(string name)
     {
         var owner = Owner.Create(name);
-        await _owners.AddAsync(owner);
+        await _owners.SaveAsync(owner);
         return owner;
     }
 }

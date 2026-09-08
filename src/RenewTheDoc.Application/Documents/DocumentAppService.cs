@@ -9,10 +9,10 @@ namespace RenewTheDoc.Application.Documents;
 /// </summary>
 public sealed class DocumentAppService
 {
-    private readonly IDocumentStore _documents;
+    private readonly IDocumentRepository _documents;
     private readonly IReminderScheduler _scheduler;
 
-    public DocumentAppService(IDocumentStore documents, IReminderScheduler scheduler)
+    public DocumentAppService(IDocumentRepository documents, IReminderScheduler scheduler)
     {
         _documents = documents;
         _scheduler = scheduler;
@@ -35,15 +35,17 @@ public sealed class DocumentAppService
         return DocumentList.Grouped(documents, today);
     }
 
+    // Add and edit write through the same upsert; what still distinguishes them is the reminder
+    // orchestration, which is the app service's job (spec §5.1).
     public async Task AddAsync(Document document)
     {
-        await _documents.AddAsync(document);
+        await _documents.SaveAsync(document);
         await _scheduler.ScheduleAsync(document);
     }
 
     public async Task EditAsync(Document document)
     {
-        await _documents.UpdateAsync(document);
+        await _documents.SaveAsync(document);
         await _scheduler.CancelAsync(document.Id); // edit = re-creation (CONTEXT.md)
         await _scheduler.ScheduleAsync(document);
     }
@@ -51,7 +53,7 @@ public sealed class DocumentAppService
     public async Task DeleteAsync(DocumentId documentId)
     {
         await _scheduler.CancelAsync(documentId);
-        await _documents.DeleteAsync(documentId);
+        await _documents.RemoveAsync(documentId);
     }
 
     public Task EnsureNotificationPermissionAsync() => _scheduler.EnsurePermissionAsync();

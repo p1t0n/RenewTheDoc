@@ -24,43 +24,43 @@ public class DocumentAppServiceTests
     public async Task Add_saves_then_schedules()
     {
         var log = new CallLog();
-        var store = new FakeDocumentStore(log);
+        var repository = new FakeDocumentRepository(log);
         var scheduler = new FakeReminderScheduler(log);
-        var service = new DocumentAppService(store, scheduler);
+        var service = new DocumentAppService(repository, scheduler);
         var document = Doc("Passport", new DateOnly(2026, 6, 1));
 
         await service.AddAsync(document);
 
-        Assert.Equal(["documents.Add(Passport)", "scheduler.Schedule(Passport)"], log.Calls);
-        Assert.Same(document, Assert.Single(store.Added));
+        Assert.Equal(["documents.Save(Passport)", "scheduler.Schedule(Passport)"], log.Calls);
+        Assert.Same(document, Assert.Single(repository.Saved));
         Assert.Same(document, Assert.Single(scheduler.Scheduled));
         Assert.Empty(scheduler.Cancelled);
     }
 
     /// <summary>
-    /// Today's edit path updates, *then* cancels, then re-schedules. Reads backwards; works because
+    /// Today's edit path writes, *then* cancels, then re-schedules. Reads backwards; works because
     /// the adapter's cancel and schedule are independent of the write. Pinned as-is — the reorder
     /// belongs to a later step, not to the extraction.
     /// </summary>
     [Fact]
-    public async Task Edit_updates_then_cancels_then_reschedules()
+    public async Task Edit_writes_then_cancels_then_reschedules()
     {
         var log = new CallLog();
         var id = DocumentId.New();
-        var store = new FakeDocumentStore(log);
+        var repository = new FakeDocumentRepository(log);
         var scheduler = new FakeReminderScheduler(log);
-        var service = new DocumentAppService(store, scheduler);
+        var service = new DocumentAppService(repository, scheduler);
         var document = Doc("Passport", new DateOnly(2026, 6, 1), id: id);
 
         await service.EditAsync(document);
 
         Assert.Equal(
-            ["documents.Update(Passport)", $"scheduler.Cancel({id})", "scheduler.Schedule(Passport)"],
+            ["documents.Save(Passport)", $"scheduler.Cancel({id})", "scheduler.Schedule(Passport)"],
             log.Calls);
-        Assert.Same(document, Assert.Single(store.Updated));
+        Assert.Same(document, Assert.Single(repository.Saved));
         Assert.Equal(id, Assert.Single(scheduler.Cancelled));
         Assert.Same(document, Assert.Single(scheduler.Scheduled));
-        Assert.Empty(store.Added);
+        Assert.Empty(repository.Removed);
     }
 
     [Fact]
@@ -68,15 +68,15 @@ public class DocumentAppServiceTests
     {
         var log = new CallLog();
         var id = DocumentId.New();
-        var store = new FakeDocumentStore(log);
+        var repository = new FakeDocumentRepository(log);
         var scheduler = new FakeReminderScheduler(log);
-        var service = new DocumentAppService(store, scheduler);
+        var service = new DocumentAppService(repository, scheduler);
 
         await service.DeleteAsync(id);
 
-        Assert.Equal([$"scheduler.Cancel({id})", $"documents.Delete({id})"], log.Calls);
+        Assert.Equal([$"scheduler.Cancel({id})", $"documents.Remove({id})"], log.Calls);
         Assert.Equal(id, Assert.Single(scheduler.Cancelled));
-        Assert.Equal(id, Assert.Single(store.Deleted));
+        Assert.Equal(id, Assert.Single(repository.Removed));
         Assert.Empty(scheduler.Scheduled);
     }
 
@@ -84,9 +84,9 @@ public class DocumentAppServiceTests
     public async Task Ensure_permission_asks_the_scheduler_and_nothing_else()
     {
         var log = new CallLog();
-        var store = new FakeDocumentStore(log);
+        var repository = new FakeDocumentRepository(log);
         var scheduler = new FakeReminderScheduler(log);
-        var service = new DocumentAppService(store, scheduler);
+        var service = new DocumentAppService(repository, scheduler);
 
         await service.EnsureNotificationPermissionAsync();
 
@@ -97,9 +97,9 @@ public class DocumentAppServiceTests
     public async Task List_reads_documents_once_and_touches_no_other_collaborator()
     {
         var log = new CallLog();
-        var store = new FakeDocumentStore(log, Doc("Passport", new DateOnly(2026, 6, 1)));
+        var repository = new FakeDocumentRepository(log, Doc("Passport", new DateOnly(2026, 6, 1)));
         var scheduler = new FakeReminderScheduler(log);
-        var service = new DocumentAppService(store, scheduler);
+        var service = new DocumentAppService(repository, scheduler);
 
         await service.ListAsync(ownerFilter: null, statusFilter: null, Today);
 
@@ -229,6 +229,6 @@ public class DocumentAppServiceTests
     private static DocumentAppService Service(params Document[] seed)
     {
         var log = new CallLog();
-        return new DocumentAppService(new FakeDocumentStore(log, seed), new FakeReminderScheduler(log));
+        return new DocumentAppService(new FakeDocumentRepository(log, seed), new FakeReminderScheduler(log));
     }
 }
