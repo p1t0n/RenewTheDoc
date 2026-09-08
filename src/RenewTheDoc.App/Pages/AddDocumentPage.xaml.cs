@@ -13,7 +13,7 @@ public partial class AddDocumentPage : ContentPage
     private readonly List<Button> _segments = [];
     private readonly IReadOnlyList<(string Code, string Name)> _countries;
     private List<Owner> _ownerList = [];
-    private Guid? _selectedOwnerId;
+    private OwnerId? _selectedOwnerId;
     private int _selectedSegment = 1; // default: 1 month
     private Document? _editTarget;
 
@@ -62,7 +62,7 @@ public partial class AddDocumentPage : ContentPage
     }
 
     /// <summary>Rebuilds the owner picker: Me · dictionary owners · "+ New owner…".</summary>
-    private async Task LoadOwnersAsync(Guid? select)
+    private async Task LoadOwnersAsync(OwnerId? select)
     {
         _ownerList = (await _owners.ListAsync()).ToList();
         OwnerPicker.ItemsSource = new[] { L.T("OwnerMe") }
@@ -158,7 +158,7 @@ public partial class AddDocumentPage : ContentPage
 
         var document = new Document
         {
-            Id = _editTarget?.Id ?? Guid.NewGuid(),
+            Id = _editTarget?.Id ?? DocumentId.New(),
             Name = name,
             ExpiryDate = DateOnly.FromDateTime(ExpiryPicker.Date ?? DateTime.Now.Date),
             RemindBefore = remindBefore,

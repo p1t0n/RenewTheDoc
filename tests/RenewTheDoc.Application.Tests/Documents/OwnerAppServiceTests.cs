@@ -17,7 +17,7 @@ public class OwnerAppServiceTests
         Assert.Equal(["owners.Add(Ann)"], log.Calls);
         Assert.Equal("Ann", owner.Name);
         Assert.Same(owner, store.LastAdded);
-        Assert.NotEqual(Guid.Empty, owner.Id);
+        Assert.NotEqual(Guid.Empty, owner.Id.Value);
     }
 
     [Fact]

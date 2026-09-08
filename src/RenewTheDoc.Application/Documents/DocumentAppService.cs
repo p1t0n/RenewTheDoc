@@ -24,7 +24,7 @@ public sealed class DocumentAppService
     /// null <paramref name="ownerId"/> means "Me" (documents without an owner).
     /// </summary>
     public async Task<IReadOnlyList<DocumentStateGroup>> ListAsync(
-        bool ownerFilterActive, Guid? ownerId, DocumentState? statusFilter, DateOnly today)
+        bool ownerFilterActive, OwnerId? ownerId, DocumentState? statusFilter, DateOnly today)
     {
         var documents = DocumentListOrder.Sorted(await _documents.GetAllAsync(), today).AsEnumerable();
         if (ownerFilterActive)
@@ -52,7 +52,7 @@ public sealed class DocumentAppService
         await _scheduler.ScheduleAsync(document);
     }
 
-    public async Task DeleteAsync(Guid documentId)
+    public async Task DeleteAsync(DocumentId documentId)
     {
         await _scheduler.CancelAsync(documentId);
         await _documents.DeleteAsync(documentId);
