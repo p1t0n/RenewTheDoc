@@ -33,7 +33,7 @@ Core feature set working on Android and iOS (verified on emulator and simulators
 
 - `src/RenewTheDoc.Domain` — domain model (see [CONTEXT.md](CONTEXT.md)), no MAUI dependency
 - `src/RenewTheDoc.Application` — application services over the domain
-- `src/RenewTheDoc.Persistence` — sqlite-net storage behind `IDocumentStore`/`IOwnerStore`
+- `src/RenewTheDoc.Persistence` — sqlite-net storage behind `IDocumentRepository`/`IOwnerRepository`
 - `src/RenewTheDoc.App` — MAUI app (Android + iOS); notifications via Plugin.LocalNotification behind `IReminderScheduler`
 - `tests/RenewTheDoc.Domain.Tests`, `tests/RenewTheDoc.Application.Tests`, `tests/RenewTheDoc.Persistence.Tests` — mirror the source projects
 
