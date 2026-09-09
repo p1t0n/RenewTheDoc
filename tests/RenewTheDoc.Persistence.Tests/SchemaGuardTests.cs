@@ -33,18 +33,45 @@ public class SchemaGuardTests
     }
 
     /// <summary>
+    /// The notification number lives in its own table rather than as a column on
+    /// <c>DocumentRow</c> — the repository upserts a whole aggregate, and the aggregate has no
+    /// number to write back (REN-54).
+    /// </summary>
+    [Fact]
+    public async Task The_notification_number_table_has_exactly_the_columns_the_row_declares()
+    {
+        await using var db = await SqliteTestDatabase.CreateAsync();
+
+        var columns = await db.ColumnsOfAsync("NotificationNumberRow");
+
+        Assert.Equal(["DocumentId", "Number"], columns);
+    }
+
+    /// <summary>The unique index is the guard that a number can never be handed out twice.</summary>
+    [Fact]
+    public async Task The_notification_number_column_is_unique_in_the_database_itself()
+    {
+        await using var db = await SqliteTestDatabase.CreateAsync();
+        await db.Database.Connection.ExecuteAsync(
+            "INSERT INTO NotificationNumberRow (DocumentId, Number) VALUES (?, 1)", Guid.NewGuid());
+
+        await Assert.ThrowsAsync<SQLiteException>(() => db.Database.Connection.ExecuteAsync(
+            "INSERT INTO NotificationNumberRow (DocumentId, Number) VALUES (?, 1)", Guid.NewGuid()));
+    }
+
+    /// <summary>
     /// Table names are part of the schema too: renaming a row type would orphan every existing row
     /// while the app still built and started cleanly.
     /// </summary>
     [Fact]
-    public async Task Initialization_creates_those_two_tables_and_nothing_else()
+    public async Task Initialization_creates_those_three_tables_and_nothing_else()
     {
         await using var db = await SqliteTestDatabase.CreateAsync();
 
         var tables = await db.Database.Connection.QueryScalarsAsync<string>(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
 
-        Assert.Equal(["DocumentRow", "OwnerRow"], tables);
+        Assert.Equal(["DocumentRow", "NotificationNumberRow", "OwnerRow"], tables);
     }
 
     /// <summary>
@@ -61,7 +88,8 @@ public class SchemaGuardTests
         Assert.Equal(["Id", "Revision"], await db.ColumnsOfAsync("OtherContextRow"));
         var tables = await db.Database.Connection.QueryScalarsAsync<string>(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
-        Assert.Equal(["DocumentRow", "OtherContextRow", "OwnerRow"], tables);
+        Assert.Equal(
+            ["DocumentRow", "NotificationNumberRow", "OtherContextRow", "OwnerRow"], tables);
     }
 
     /// <summary>Stands in for a Cloud Sync row: a foreign context's table, not the Documents context's.</summary>
