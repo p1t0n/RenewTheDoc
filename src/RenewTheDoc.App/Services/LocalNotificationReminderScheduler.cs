@@ -2,6 +2,7 @@ using Plugin.LocalNotification;
 using Plugin.LocalNotification.Core.Models;
 using RenewTheDoc.App.Localization;
 using RenewTheDoc.Domain.Documents;
+using RenewTheDoc.Persistence.Notifications;
 
 namespace RenewTheDoc.App.Services;
 
@@ -50,7 +51,7 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         return await LocalNotificationCenter.Current.RequestNotificationPermission();
     }
 
-    // Unwraps to the Guid so the mapping stays bit-for-bit what it was before typed ids — a
-    // different hash would orphan every already-scheduled notification. Still REN-54's known bug.
-    private static int ToNotificationId(DocumentId id) => id.Value.GetHashCode() & 0x7FFFFFFF;
+    // REN-54's known bug, now extracted so a test can pin it: two Documents can fold to the same
+    // number and then one's cancel kills the other's Reminder.
+    private static int ToNotificationId(DocumentId id) => DerivedNotificationNumber.For(id);
 }
