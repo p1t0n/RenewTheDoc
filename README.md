@@ -37,14 +37,32 @@ Core feature set working on Android and iOS (verified on emulator and simulators
 - `src/RenewTheDoc.App` — MAUI app (Android + iOS); notifications via Plugin.LocalNotification behind `IReminderScheduler`
 - `tests/RenewTheDoc.Domain.Tests`, `tests/RenewTheDoc.Application.Tests`, `tests/RenewTheDoc.Persistence.Tests` — mirror the source projects
 
+## How it's built
+
+Domain-driven design, sized to the app rather than to the pattern catalogue.
+
+The rules that make this app what it is — when a reminder fires, what makes a document valid, what "Me" means — live in `RenewTheDoc.Domain`, which references no UI framework and no database. `Document` is immutable, can only be built through `Create` or `Restore` (both validating), returns a new instance from `Edit`, and **plans its own reminder**. `Owner` is a separate aggregate, because renaming someone shouldn't ripple through every document that names them.
+
+Use cases live one layer out, in `RenewTheDoc.Application`: add, edit, delete, list, re-plan reminders. Pages call those and do nothing else — before the refactor, "editing a document cancels and re-plans its reminder" was implemented in a page's click handler, which meant the app's headline rule had no test and no home.
+
+Everything the domain needs from the outside world is an interface it owns — `IDocumentRepository`, `IOwnerRepository`, `IReminderScheduler` — implemented further out in `Persistence` and the MAUI head. Dependencies point one way:
+
+```
+App  →  Application + Persistence  →  Domain
+```
+
+**What was deliberately left out**, so nobody adds it expecting to find company: no MVVM framework, no domain events, no CQRS or unit-of-work, no `Result<T>`, no mediator. Each was considered and rejected at this size — about 2,000 lines of app code against 1,900 of tests — where an application service calling two collaborators is easier to read and test than the indirection that would replace it. The reasoning, including what would justify revisiting each one, is in [docs/architecture/ddd-refactor.md](docs/architecture/ddd-refactor.md).
+
 ## Building locally
 
 ```sh
 dotnet workload install maui
-dotnet test                                        # domain tests
+dotnet test tests/RenewTheDoc.Domain.Tests         # and .Application.Tests, .Persistence.Tests
 dotnet build src/RenewTheDoc.App -f net10.0-android \
-  -p:JavaSdkDirectory=$JAVA_HOME                   # needs JDK 17 + Android SDK
+  -p:JavaSdkDirectory=<your JDK 17 home>           # needs JDK 17 + Android SDK
 ```
+
+A bare `dotnet test` also builds the Android head, so it fails without the JDK path — run the test projects directly. `JavaSdkDirectory` wants the JDK's home directory itself (on macOS that includes `/Contents/Home`); if `ANDROID_HOME` is unset, add `-p:AndroidSdkDirectory=<your SDK path>`.
 
 iOS build requires a Mac with full Xcode (`net10.0-ios` target). For a standalone `adb install` of a debug APK, add `-p:EmbedAssembliesIntoApk=true`.
 
