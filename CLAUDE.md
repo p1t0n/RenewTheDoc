@@ -15,9 +15,11 @@ Work is planned as "wayfinder maps" on Linear (team REN).
 ## Commands
 
 ```sh
-dotnet test tests/RenewTheDoc.Core.Tests           # domain tests
+dotnet test tests/RenewTheDoc.Domain.Tests         # domain rules
+dotnet test tests/RenewTheDoc.Application.Tests    # use-case orchestration, over fakes
+dotnet test tests/RenewTheDoc.Persistence.Tests    # real SQLite, incl. the schema guard test
 # NB: bare `dotnet test` also builds the Android head and fails without the JDK flag below
-dotnet test --filter "FullyQualifiedName~ReminderPlannerTests"   # single test class/method
+dotnet test tests/RenewTheDoc.Domain.Tests --filter "FullyQualifiedName~DocumentStateTests"  # one class
 
 # Android build (needs JDK 17 + Android SDK)
 dotnet build src/RenewTheDoc.App -f net10.0-android \
@@ -48,17 +50,17 @@ CI (`.github/workflows/ci.yml`) runs: domain tests, Release Android build, unsig
 
 ## Architecture
 
-Two projects + tests:
+Four projects + three test projects, `App → Application + Persistence → Domain`, nothing pointing back. The shape and the reasoning behind it are in [docs/architecture/ddd-refactor.md](docs/architecture/ddd-refactor.md).
 
-- **`src/RenewTheDoc.Core`** — pure domain, no MAUI dependency. Holds the model (`Document`, `Owner`, `RemindBefore`), derived state (`DocumentState`, `DocumentListOrder`), pure reminder logic (`ReminderPlanner` → `ReminderInstruction.None | Immediate | At`), and the ports: `IDocumentStore`, `IOwnerStore`, `IReminderScheduler`. New domain rules go here, with tests.
-- **`src/RenewTheDoc.App`** — MAUI shell around Core. Adapters live in `Services/`:
-  - `SqliteDocumentStore` (sqlite-net) implements **both** `IDocumentStore` and `IOwnerStore`; registered once in `MauiProgram` as a shared singleton. Persistence uses private nested `*Row` classes; `DateOnly` stored as ISO string. Tables are created lazily (`EnsureInitializedAsync`) — no migration framework, so schema changes need care.
-  - `LocalNotificationReminderScheduler` (Plugin.LocalNotification) implements `IReminderScheduler`, executing `ReminderInstruction`s.
-- **`tests/RenewTheDoc.Core.Tests`** — xUnit tests for domain rules only. No App/UI tests.
+- **`src/RenewTheDoc.Domain`** (plain `net10.0`) — the model (`Document`, `Owner`, `DocumentOwner`, `Country`, `RemindBefore`, typed `DocumentId`/`OwnerId`), derived state (`DocumentState`, `DocumentList.Grouped`), `ReminderInstruction`/`ReminderContent`, `DomainRule` + `DomainRuleViolationException`, and the ports `IDocumentRepository`, `IOwnerRepository`, `IReminderScheduler`. `Document` is immutable, built only through `Create`/`Restore`, edited through `Edit` returning a new instance, and **plans its own Reminder** (`PlanReminder(nowLocal)`) — there is no `ReminderPlanner`. New domain rules go here, with tests.
+- **`src/RenewTheDoc.Application`** — `DocumentAppService` (add / edit / delete / list / re-plan-all / notification permission) and `OwnerAppService` (list / add). **This is where use-case orchestration lives**; pages call it and do no orchestration of their own. Time enters as a parameter (`nowLocal`) — no clock port, no ambient `DateTime.Now` below the UI.
+- **`src/RenewTheDoc.Persistence`** — `SqliteDocumentRepository` + `SqliteOwnerRepository` + `SqliteNotificationNumbers`, over a shared `SqliteDatabase` that owns the connection and creates **three** tables (`DocumentRow`, `OwnerRow`, `NotificationNumberRow`) in one `InitializeAsync`, awaited once at startup in `MauiProgram` — not lazily per call. Mapping uses private nested `*Row` POCOs with fully settable properties: sqlite-net **silently skips** get-only and `private set` properties, which is why a schema guard test asserts the real column list. `DateOnly` is stored as an ISO string. No migration framework, so schema changes need care.
+- **`src/RenewTheDoc.App`** — the MAUI head: pages, XAML, localization, DI, and `LocalNotificationReminderScheduler` (Plugin.LocalNotification), which executes a **decided** `ReminderInstruction` and makes no domain decisions. Notification ids come from `SqliteNotificationNumbers`, assigned once per Document and persisted — they are no longer derived from the id (REN-54; `DerivedNotificationNumber` is kept only to pin the old behaviour in tests).
+- **`tests/`** mirrors source: `RenewTheDoc.Domain.Tests`, `.Application.Tests` (fakes for both repositories and the scheduler), `.Persistence.Tests` (real SQLite). No App/UI tests — page code-behind sits in the MAUI head, which a plain test project cannot reference.
 
-Pages (`DocumentListPage`, `AddDocumentPage` — the latter doubles as the edit page) use plain code-behind, no MVVM framework. Registered transient in DI; resolved via constructor injection.
+Pages (`DocumentListPage`, `AddDocumentPage` — the latter doubles as the edit page) use plain code-behind, no MVVM framework, and are registered transient; app services and repositories are singletons.
 
-Key domain rules (details in CONTEXT.md): a document has exactly one Reminder firing at 09:00 local on (expiry − remind-before); already-past reminder moment fires immediately once; expired documents get no reminder; **editing cancels and re-plans exactly like creation; deleting cancels**.
+Key domain rules (details in CONTEXT.md): a document has exactly one Reminder firing at 09:00 local on (expiry − remind-before); already-past reminder moment fires immediately once; expired documents get no reminder; **editing cancels and re-plans exactly like creation; deleting cancels**. Every reminder is also re-planned on launch, which is the safety net for scheduling lost to a failed write, revoked permission, or a device restore.
 
 ## Localization
 
