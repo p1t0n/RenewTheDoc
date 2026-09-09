@@ -6,6 +6,7 @@ using RenewTheDoc.Application.Documents;
 using RenewTheDoc.Domain.Documents;
 using RenewTheDoc.Persistence;
 using RenewTheDoc.Persistence.Documents;
+using RenewTheDoc.Persistence.Notifications;
 
 namespace RenewTheDoc.App;
 
@@ -47,6 +48,7 @@ public static class MauiProgram
         builder.Services.AddSingleton(database);
         builder.Services.AddSingleton<IDocumentRepository, SqliteDocumentRepository>();
         builder.Services.AddSingleton<IOwnerRepository, SqliteOwnerRepository>();
+        builder.Services.AddSingleton<SqliteNotificationNumbers>();
         builder.Services.AddSingleton<IReminderScheduler, LocalNotificationReminderScheduler>();
         builder.Services.AddSingleton<DocumentAppService>();
         builder.Services.AddSingleton<OwnerAppService>();

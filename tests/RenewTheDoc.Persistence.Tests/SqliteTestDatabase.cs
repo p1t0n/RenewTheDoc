@@ -27,6 +27,18 @@ public sealed class SqliteTestDatabase : IAsyncDisposable
         return new SqliteTestDatabase(path, database);
     }
 
+    /// <summary>
+    /// The same file, closed and opened again through a fresh initializer — an app restart. Both
+    /// handles are safe to dispose; the second delete of the file is a no-op.
+    /// </summary>
+    public async Task<SqliteTestDatabase> ReopenAsync()
+    {
+        await Database.Connection.CloseAsync();
+        var database = new SqliteDatabase(_path);
+        await database.InitializeAsync();
+        return new SqliteTestDatabase(_path, database);
+    }
+
     /// <summary>The column names of a table, in declaration order, straight out of SQLite.</summary>
     public async Task<IReadOnlyList<string>> ColumnsOfAsync(string table)
     {
@@ -37,7 +49,7 @@ public sealed class SqliteTestDatabase : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await Database.Connection.CloseAsync();
-        File.Delete(_path);
+        if (File.Exists(_path)) File.Delete(_path);
     }
 
     /// <summary>One row of <c>PRAGMA table_info</c>; sqlite-net matches the column names case-insensitively.</summary>

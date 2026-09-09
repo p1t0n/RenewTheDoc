@@ -11,8 +11,18 @@ namespace RenewTheDoc.App.Services;
 /// usage inside this class). iOS caps pending local notifications at 64; with one Reminder per
 /// document that allows 64 documents — queue refreshing is fogged until it matters.
 /// </summary>
+/// <remarks>
+/// The plugin identifies a notification by an int, and which int a Document owns is this adapter's
+/// business — it just no longer computes it. <see cref="SqliteNotificationNumbers"/> hands out one
+/// per Document and remembers it, so two Documents can no longer fold onto the same number and
+/// cancel each other's Reminder (REN-54).
+/// </remarks>
 public sealed class LocalNotificationReminderScheduler : IReminderScheduler
 {
+    private readonly SqliteNotificationNumbers _numbers;
+
+    public LocalNotificationReminderScheduler(SqliteNotificationNumbers numbers) => _numbers = numbers;
+
     public async Task ScheduleAsync(
         DocumentId documentId, ReminderInstruction instruction, ReminderContent content)
     {
@@ -20,9 +30,12 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         // there is nothing to alert about, so the platform is never touched.
         if (instruction is ReminderInstruction.None) return;
 
+        var number = await _numbers.ForAsync(documentId);
+        ClearSupersededNotification(number);
+
         var request = new NotificationRequest
         {
-            NotificationId = ToNotificationId(documentId),
+            NotificationId = number.Value,
             Title = L.T("NotificationTitle"),
             Description = L.F("NotificationText", content.DocumentName, content.ExpiryDate.ToString("d")),
         };
@@ -38,10 +51,14 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         await LocalNotificationCenter.Current.Show(request);
     }
 
-    public Task CancelAsync(DocumentId documentId)
+    public async Task CancelAsync(DocumentId documentId)
     {
-        LocalNotificationCenter.Current.Cancel(ToNotificationId(documentId));
-        return Task.CompletedTask;
+        // Asking for the number of a Document that is about to be deleted assigns it one, which
+        // leaves a row behind. That is the point: the row is what stops the number being handed to
+        // another Document, and this is also the path that clears a pre-REN-54 notification.
+        var number = await _numbers.ForAsync(documentId);
+        LocalNotificationCenter.Current.Cancel(number.Value);
+        ClearSupersededNotification(number);
     }
 
     public async Task<bool> EnsurePermissionAsync()
@@ -51,7 +68,14 @@ public sealed class LocalNotificationReminderScheduler : IReminderScheduler
         return await LocalNotificationCenter.Current.RequestNotificationPermission();
     }
 
-    // REN-54's known bug, now extracted so a test can pin it: two Documents can fold to the same
-    // number and then one's cancel kills the other's Reminder.
-    private static int ToNotificationId(DocumentId id) => DerivedNotificationNumber.For(id);
+    /// <summary>
+    /// Clears the notification an older build left standing under the derived number, the first time
+    /// this Document is seen after the upgrade. Without it an existing install alerts twice for that
+    /// Document, and keeps alerting after it is deleted — the derived number is no longer known to
+    /// anything that cancels.
+    /// </summary>
+    private static void ClearSupersededNotification(NotificationNumber number)
+    {
+        if (number.Superseded is { } derived) LocalNotificationCenter.Current.Cancel(derived);
+    }
 }

@@ -1,4 +1,5 @@
 using RenewTheDoc.Persistence.Documents;
+using RenewTheDoc.Persistence.Notifications;
 using SQLite;
 
 namespace RenewTheDoc.Persistence;
@@ -23,7 +24,10 @@ public sealed class SqliteDatabase
     /// </summary>
     public SQLiteAsyncConnection Connection { get; }
 
-    /// <summary>Creates the Documents context's tables. Idempotent, but meant to be called once.</summary>
+    /// <summary>
+    /// Creates the Documents context's tables, plus the notification-number table the reminder
+    /// adapter reads (REN-54). Idempotent, but meant to be called once.
+    /// </summary>
     /// <remarks>
     /// <c>ConfigureAwait(false)</c> is load-bearing, not decoration. Startup calls this from the UI
     /// thread and has to wait for it, so a continuation posted back to that thread would never run:
@@ -34,5 +38,6 @@ public sealed class SqliteDatabase
     {
         await SqliteDocumentRepository.CreateTablesAsync(Connection).ConfigureAwait(false);
         await SqliteOwnerRepository.CreateTablesAsync(Connection).ConfigureAwait(false);
+        await SqliteNotificationNumbers.CreateTablesAsync(Connection).ConfigureAwait(false);
     }
 }
