@@ -17,6 +17,7 @@ public partial class AddDocumentPage : ContentPage
     private DocumentOwner _selectedOwner = DocumentOwner.Me;
     private int _selectedSegment = 1; // default: 1 month
     private Document? _editTarget;
+    private bool _ownersLoaded;
 
     private static readonly (string Key, RemindBefore? Value)[] RemindOptions =
     [
@@ -59,7 +60,21 @@ public partial class AddDocumentPage : ContentPage
         CountryPicker.SelectedIndex = 0;
 
         ExpiryPicker.Date = DateTime.Now.Date.AddMonths(6);
-        _ = LoadOwnersAsync(DocumentOwner.Me);
+    }
+
+    /// <summary>
+    /// The owner picker is loaded here, once, rather than in the constructor: Shell applies the
+    /// <c>edit</c> query property between construction and appearing, so this is the first moment
+    /// the page knows whether it is editing. Two loads used to race — the constructor's could land
+    /// last and reset the selection to Me, and saving then reassigned the document silently
+    /// (REN-64).
+    /// </summary>
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_ownersLoaded) return;
+        _ownersLoaded = true;
+        await LoadOwnersAsync(_editTarget?.Owner ?? DocumentOwner.Me);
     }
 
     /// <summary>
@@ -139,7 +154,8 @@ public partial class AddDocumentPage : ContentPage
         var countryIndex = _countries.ToList().FindIndex(c => c.Code == doc.Country?.Code);
         CountryPicker.SelectedIndex = countryIndex >= 0 ? countryIndex + 1 : 0;
 
-        _ = LoadOwnersAsync(doc.Owner);
+        // The owner picker is loaded in OnAppearing, which reads _editTarget.Owner — this setter
+        // cannot await, so it must not start the load itself.
     }
 
     private void SelectSegment(int index)
