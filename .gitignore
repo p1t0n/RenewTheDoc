@@ -30,3 +30,6 @@ DerivedData/
 # Local secrets
 *.env
 appsettings.local.json
+
+# ralph logs
+ralph/runs
