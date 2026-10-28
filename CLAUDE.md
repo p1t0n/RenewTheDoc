@@ -18,13 +18,11 @@ Work is planned as "wayfinder maps" on Linear (team REN).
 dotnet test tests/RenewTheDoc.Domain.Tests         # domain rules
 dotnet test tests/RenewTheDoc.Application.Tests    # use-case orchestration, over fakes
 dotnet test tests/RenewTheDoc.Persistence.Tests    # real SQLite, incl. the schema guard test
-# NB: bare `dotnet test` also builds the Android head and fails without the JDK flag below
+# NB: bare `dotnet test` also builds the Android + iOS heads, so it needs the full toolchain
 dotnet test tests/RenewTheDoc.Domain.Tests --filter "FullyQualifiedName~DocumentStateTests"  # one class
 
 # Android build (needs JDK 17 + Android SDK)
-dotnet build src/RenewTheDoc.App -f net10.0-android \
-  -p:JavaSdkDirectory=$HOME/.jdks/jdk-17.0.20+8/Contents/Home \
-  -p:AndroidSdkDirectory=$HOME/Library/Android/sdk
+dotnet build src/RenewTheDoc.App -f net10.0-android
 # add -p:EmbedAssembliesIntoApk=true for a standalone adb-installable debug APK
 
 # iOS simulator build (Mac + full Xcode)
@@ -40,9 +38,9 @@ dotnet workload restore                            # fixes NETSDK1147 (workload 
 
 Build gotchas, each verified the hard way (REN-53):
 
-- `JavaSdkDirectory` needs the **full** path including `/Contents/Home` — without it, `error XA5300: The Java SDK directory could not be found.`
-- `ANDROID_HOME` is unset on this machine, so Android builds need `-p:AndroidSdkDirectory` explicitly.
-- `xcode-select` points at CommandLineTools, so iOS builds may need `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
+- `global.json` pins the .NET 10 SDK (`10.0.4xx`, `latestFeature`) — without it a preview SDK on the machine (e.g. 11 RC) gets picked, and its iOS pack demands a different Xcode (`requires Xcode 26.6. The current version of Xcode is 27.1`).
+- MAUI workloads are installed **per SDK band**: a new band (e.g. 10.0.4xx) has none until `sudo dotnet workload install maui` runs from the repo root. The iOS pack in the workload must match the installed Xcode.
+- `error XA5300: The Java SDK directory could not be found.` means no JDK is registered for `/usr/libexec/java_home`. The JDK 17 in `~/.jdks` is symlinked into `/Library/Java/JavaVirtualMachines/temurin-17.jdk`; `-p:JavaSdkDirectory=<jdk>/Contents/Home` (full path) also works.
 - Unsigned iOS **device** builds stop at `error : No valid iOS code signing keys found in keychain.` without the two code-signing opt-outs above (that gate runs before compilation).
 - `error NETSDK1147: ... the following workloads must be installed: maui-android` usually means the `maui` workload is registered under an older SDK band than the installed SDK — `dotnet workload restore`, not a reinstall.
 
